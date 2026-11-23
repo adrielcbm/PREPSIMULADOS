@@ -1,1960 +1,1142 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrepSimulados - Auditor Fiscal & PCDF Pro</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
-                    },
-                    colors: {
-                        // Paleta reformulada: neutros mais quentes (menos "cansativo à vista" que
-                        // o cinza-azulado padrão) + um único tom principal (em vez de azul, índigo
-                        // e roxo competindo entre si). Âmbar e esmeralda ficam reservados para
-                        // destaque/glossário e feedback de acerto, respectivamente.
-                        slate: {
-                            50: '#FAFAF9', 100: '#F2F0EC', 200: '#E4E0D8', 300: '#CFC8BB',
-                            400: '#A79E8E', 500: '#7C7364', 600: '#5C5548', 700: '#453F35',
-                            800: '#2B2723', 900: '#1B1815', 950: '#100E0C'
-                        },
-                        indigo: {
-                            50: '#EEF4F3', 400: '#6C9E9C', 500: '#4A807D', 600: '#396765',
-                            700: '#2C514F', 900: '#173231', 950: '#0F2221'
-                        },
-                        blue: {
-                            50: '#EEF4F3', 400: '#6C9E9C', 500: '#4A807D', 600: '#396765',
-                            700: '#2C514F', 950: '#0F2221'
-                        },
-                        purple: {
-                            400: '#6C9E9C', 500: '#4A807D', 600: '#396765'
-                        },
-                        sky: { 500: '#4A807D' },
-                        emerald: {
-                            50: '#EFF6EE', 200: '#CFE2CE', 300: '#AED0AC', 400: '#7FB57E',
-                            500: '#5C9C5C', 600: '#487D49', 700: '#3A6539', 900: '#1F3820'
-                        },
-                        amber: {
-                            300: '#E7C589', 400: '#DBAA5C', 500: '#C89043', 600: '#A87633', 700: '#845E29'
-                        },
-                        red: { 500: '#C15C4B' }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Fontes: Inter para UI/corpo, Fraunces para títulos (identidade própria, não genérica) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        h1, h2, .font-display {
-            font-family: 'Fraunces', serif;
-            letter-spacing: -0.01em;
-        }
-        /* Transição suave ao trocar de tela — um único momento orquestrado, não animações espalhadas */
-        .view-section:not(.hidden) {
-            animation: viewFadeIn 0.35s ease-out;
-        }
-        @keyframes viewFadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .view-section:not(.hidden) { animation: none; }
-        }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(27, 24, 21, 0.4);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(124, 115, 100, 0.5);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(124, 115, 100, 0.8);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrepSimulados — Banco de Questões & Simulados</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b1120;
+      color: #e2e8f0;
+    }
+
+    /* Proteção anti-cópia em áreas de conteúdo (mantém inputs/textareas livres) */
+    .protected-content {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    input, textarea, select, [contenteditable="true"] {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+
+    /* Marca d'água discreta para prints */
+    .watermark-layer {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0.055;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      transform: rotate(-18deg) scale(1.2);
+      z-index: 0;
+    }
+    .watermark-item {
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #f8fafc;
+      white-space: nowrap;
+      text-align: center;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+<body class="min-h-screen flex flex-col">
 
-    <!-- NAVIGATION BAR -->
-    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <span class="font-display font-semibold text-lg tracking-tight text-slate-900 dark:text-white">PrepSimulados</span>
-                        <span class="block text-[10px] font-bold tracking-widest uppercase text-slate-400">Auditor Fiscal & PCDF</span>
-                    </div>
-                </div>
-
-                <!-- Desktop Nav Links -->
-                <nav class="hidden md:flex items-center gap-1">
-                    <button onclick="navigateTo('home')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-2">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Início
-                    </button>
-                    <button onclick="navigateTo('quiz')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-2">
-                        <i data-lucide="help-circle" class="w-4 h-4"></i> Simulados
-                    </button>
-                    <button onclick="navigateTo('ai-gen')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition flex items-center gap-2 font-semibold">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i> Elaborador IA Pro
-                    </button>
-                    <button onclick="navigateTo('bank')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-2">
-                        <i data-lucide="database" class="w-4 h-4"></i> Banco
-                    </button>
-                    <button onclick="navigateTo('glossary')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-2">
-                        <i data-lucide="book-open" class="w-4 h-4"></i> Glossário <span id="nav-glossary-badge" class="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-400 rounded-full font-bold">0</span>
-                    </button>
-                    <button onclick="navigateTo('stats')" class="nav-btn px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-2">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Desempenho
-                    </button>
-                </nav>
-
-                <!-- Actions -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <div id="storage-status-badge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
-                        <i data-lucide="hard-drive" class="w-3.5 h-3.5"></i>
-                        <span id="storage-status-text">Banco Ativo</span>
-                    </div>
-
-                    <button onclick="cloudBadgeClicked()" id="cloud-status-badge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-500 border border-slate-300 dark:border-slate-600 text-xs font-bold transition hover:opacity-80" title="Clique para sincronizar da nuvem ou trocar a URL">
-                        ☁️ Nuvem
-                    </button>
-
-                    <button onclick="openBulkJsonModal()" class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-600/10 hover:bg-purple-600/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-bold text-xs transition">
-                        <i data-lucide="file-up" class="w-4 h-4"></i> Importar / Exportar JSON
-                    </button>
-
-                    <button onclick="openManualQuestionModal()" class="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Criar Questão
-                    </button>
-
-                    <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:scale-105 transition">
-                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
-                        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
-                    </button>
-
-                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                        <i data-lucide="menu" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
+  <!-- TOPBAR -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-extrabold text-slate-950 text-lg shadow-lg shadow-emerald-500/20">
+          PS
         </div>
-
-        <!-- Mobile Menu Drawer -->
-        <div id="mobile-menu" class="hidden md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-2 pb-4 space-y-1">
-            <button onclick="navigateTo('home'); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Início
-            </button>
-            <button onclick="navigateTo('quiz'); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <i data-lucide="help-circle" class="w-4 h-4"></i> Simulados
-            </button>
-            <button onclick="navigateTo('ai-gen'); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 text-indigo-500 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <i data-lucide="sparkles" class="w-4 h-4"></i> Elaborador IA Pro
-            </button>
-            <button onclick="openBulkJsonModal(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 text-purple-500 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold">
-                <i data-lucide="file-up" class="w-4 h-4"></i> Importar Questões em JSON
-            </button>
-            <button onclick="syncFromCloudNow(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 text-sky-500 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold">
-                ☁️ Sincronizar da Nuvem
-            </button>
-            <button onclick="openManualQuestionModal(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold">
-                <i data-lucide="plus-circle" class="w-4 h-4"></i> Cadastrar Questão Manual
-            </button>
-            <button onclick="navigateTo('bank'); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <i data-lucide="database" class="w-4 h-4"></i> Banco de Questões
-            </button>
-            <button onclick="navigateTo('glossary'); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <i data-lucide="book-open" class="w-4 h-4"></i> Glossário Legal
-            </button>
-            <button onclick="navigateTo('stats'); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Meu Desempenho
-            </button>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-white tracking-tight text-lg">PrepSimulados</span>
+            <span id="studentBadge" class="hidden text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"></span>
+            <span id="adminBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              MODO ADMIN ATIVO
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">5 questões grátis por trilha • Planos 6 e 12 meses</p>
         </div>
-    </header>
+      </div>
 
-    <!-- MAIN CONTENT CONTAINER -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <!-- ==================== HOME VIEW ==================== -->
-        <section id="view-home" class="view-section space-y-8">
-            <!-- Hero Banner -->
-            <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-8 sm:p-12 border border-slate-800 shadow-xl">
-                <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="relative z-10 max-w-2xl space-y-4">
-                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Backup Local + Sincronização na Nuvem
-                    </span>
-                    <h1 class="text-3xl sm:text-5xl font-semibold tracking-tight text-white leading-tight">
-                        Domine a banca <span class="text-indigo-300">Cebraspe & FGV</span>
-                    </h1>
-                    <p class="text-slate-300 text-base sm:text-lg">
-                        Suas questões manuais, importadas e geradas pela IA ficam <strong>salvas permanentemente</strong>. Use o <strong class="text-white">Elaborador IA Pro</strong> para converter leis e PDFs em simulados práticos!
-                    </p>
-                    <div class="flex flex-wrap gap-3 pt-2">
-                        <button onclick="startQuickQuiz('ALL')" class="px-6 py-3.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold transition flex items-center gap-2 shadow-lg shadow-indigo-900/40">
-                            <i data-lucide="play" class="w-5 h-5"></i> Iniciar Simulado
-                        </button>
-                        <button onclick="navigateTo('ai-gen')" class="px-6 py-3.5 rounded-xl bg-transparent border border-slate-600 hover:border-indigo-400 hover:text-indigo-300 text-slate-200 font-semibold transition flex items-center gap-2">
-                            <i data-lucide="sparkles" class="w-5 h-5"></i> Usar Elaborador IA Pro
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Quick Stats (Fixed Clean Grid) -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Respondidas</span>
-                        <i data-lucide="check-square" class="w-5 h-5 text-blue-500"></i>
-                    </div>
-                    <div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-total-solved">0</div>
-                    <span class="text-xs text-emerald-500 font-medium">Caderno atualizado</span>
-                </div>
-
-                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Taxa de Acerto</span>
-                        <i data-lucide="target" class="w-5 h-5 text-emerald-500"></i>
-                    </div>
-                    <div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-accuracy">0%</div>
-                    <span class="text-xs text-slate-400 font-medium">Meta: &gt; 80%</span>
-                </div>
-
-                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">No Banco</span>
-                        <i data-lucide="database" class="w-5 h-5 text-purple-500"></i>
-                    </div>
-                    <div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-bank-count">0</div>
-                    <span class="text-xs text-purple-400 font-medium" id="stat-storage-type">Armazenamento Salvo</span>
-                </div>
-
-                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Glossário</span>
-                        <i data-lucide="book-open" class="w-5 h-5 text-amber-500"></i>
-                    </div>
-                    <div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-glossary-count">0</div>
-                    <span class="text-xs text-amber-400 font-medium">Termos cadastrados</span>
-                </div>
-            </div>
-
-            <!-- GitHub Backup Warning Banner -->
-            <div id="storage-warning-banner" class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="shield-alert" class="w-4 h-4 shrink-0"></i>
-                    <span><strong>Dica do Desenvolvedor:</strong> Ao hospedar no <strong>GitHub Pages</strong>, suas questões ficarão salvas automaticamente no navegador do usuário. Você também pode fazer backup do seu banco em JSON a qualquer momento!</span>
-                </div>
-                <button onclick="exportQuestionBankToJson()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 font-bold transition flex items-center gap-1">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Baixar Backup (.json)
-                </button>
-            </div>
-
-            <!-- Target Selection Cards -->
-            <div class="space-y-4">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i data-lucide="compass" class="w-5 h-5 text-blue-500"></i> Escolha sua Carreira Alvo
-                </h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- PCDF Card -->
-                    <div onclick="startQuickQuiz('PCDF')" class="group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-blue-500 dark:hover:border-blue-500 transition cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full group-hover:scale-110 transition"></div>
-                        <div class="flex items-start gap-4">
-                            <div class="p-3.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                                <i data-lucide="badge-check" class="w-8 h-8"></i>
-                            </div>
-                            <div class="space-y-1">
-                                <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">Carreira Policial</span>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">PCDF (Polícia Civil do DF)</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400">Dir. Penal, Proc. Penal, Dir. Constitucional, Dir. Administrativo e RLM.</p>
-                            </div>
-                        </div>
-                        <div class="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50">
-                            <span class="text-xs font-semibold text-slate-400">Simulado Cebraspe</span>
-                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition flex items-center gap-1">
-                                Treinar Agora <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Auditor Card -->
-                    <div onclick="startQuickQuiz('AUDITOR')" class="group p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 transition cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-bl-full group-hover:scale-110 transition"></div>
-                        <div class="flex items-start gap-4">
-                            <div class="p-3.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                <i data-lucide="calculator" class="w-8 h-8"></i>
-                            </div>
-                            <div class="space-y-1">
-                                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Carreira Fiscal</span>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Auditor Fiscal (Receita & SEFAZ)</h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400">Dir. Tributário, Contabilidade Avançada, Aud. Fiscal e Dir. Const/Admin.</p>
-                            </div>
-                        </div>
-                        <div class="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50">
-                            <span class="text-xs font-semibold text-slate-400">Foco FGV e Cebraspe</span>
-                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition flex items-center gap-1">
-                                Treinar Agora <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Individual Discipline Practice (não apenas simulados por carreira) -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <i data-lucide="book-marked" class="w-5 h-5 text-indigo-500"></i> Praticar por Disciplina
-                    </h2>
-                    <span class="text-xs text-slate-400 font-medium">Foque numa matéria específica em vez do simulado completo</span>
-                </div>
-                <div id="discipline-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    <!-- Gerado dinamicamente via renderDisciplineCards() -->
-                </div>
-            </div>
-        </section>
-
-        <!-- ==================== QUIZ VIEW ==================== -->
-        <section id="view-quiz" class="view-section hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-                <div>
-                    <span class="text-xs font-extrabold tracking-wider uppercase text-blue-500" id="quiz-discipline-tag">DIREITO CONSTITUCIONAL</span>
-                    <h2 class="text-2xl font-black text-slate-900 dark:text-white" id="quiz-title">Simulado Prático</h2>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-extrabold text-slate-400" id="quiz-progress-text">Questão 1 de 5</span>
-                </div>
-            </div>
-
-            <!-- Quiz Visual Progress Bar -->
-            <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                <div id="quiz-progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div>
-            </div>
-
-            <!-- Question Box -->
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
-                <!-- Enunciado -->
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2">
-                        <span id="quiz-role-badge" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">CEBRASPE - PCDF</span>
-                        <span id="quiz-source-badge" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-indigo-500/10 text-indigo-400">Inédita</span>
-                    </div>
-                    <p class="text-base sm:text-lg font-medium text-slate-800 dark:text-slate-100 leading-relaxed" id="quiz-statement">
-                        Carregando questão...
-                    </p>
-                </div>
-
-                <!-- Options -->
-                <div class="space-y-3" id="quiz-options-container">
-                    <!-- Dynamic radio options injected via JS -->
-                </div>
-
-                <!-- Action Button -->
-                <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/60">
-                    <button onclick="checkQuizAnswer()" id="btn-submit-answer" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition flex items-center gap-2">
-                        Responder Questão
-                    </button>
-                    <button onclick="nextQuizQuestion()" id="btn-next-question" class="hidden px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition flex items-center gap-2">
-                        Próxima Questão <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <!-- Gabarito Comentado -->
-                <div id="quiz-explanation-box" class="hidden p-5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 space-y-3">
-                    <div class="flex items-center gap-2 font-bold text-sm" id="quiz-result-title"></div>
-                    <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed" id="quiz-explanation-text"></p>
-                    <div class="text-xs font-semibold text-blue-600 dark:text-blue-400" id="quiz-law-article"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==================== AI GENERATOR VIEW ==================== -->
-        <section id="view-ai-gen" class="view-section hidden space-y-6">
-            <div class="text-center space-y-2 max-w-2xl mx-auto">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i> Elaborador de Provas Profissional (Cebraspe & FGV)
-                </span>
-                <h2 class="text-3xl font-black text-slate-900 dark:text-white">Gerador Baseado em Leis, PDFs & Doutrina</h2>
-                <p class="text-slate-500 dark:text-slate-400 text-sm">Cole abaixo o <strong>artigo de lei, trecho do seu PDF ou resumo doutrinário</strong> para a IA elaborar questões no padrão exato da banca.</p>
-            </div>
-
-            <!-- Form Box -->
-            <div class="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-xl space-y-6">
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Cole o Texto Base (Artigo de Lei, PDF ou Doutrina)</label>
-                            <span class="text-[11px] text-slate-400 font-medium">Precisão de Banca</span>
-                        </div>
-                        <textarea id="ai-source-text" rows="5" placeholder="Ex: Cole aqui o trecho do PDF ou artigo de lei (ex: Art. 157 do CP, ou Atributos dos Atos Administrativos)..." class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed text-slate-800 dark:text-slate-100"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Assunto Específico / Tópico</label>
-                        <input type="text" id="ai-topic-input" placeholder="Ex: Inquérito Policial, Lançamento Tributário, Crimes contra o Patrimônio..." class="w-full px-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-800 dark:text-slate-100">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Carreira Alvo</label>
-                            <select id="ai-role-select" class="w-full px-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-800 dark:text-slate-100 text-sm">
-                                <option value="PCDF">PCDF (Polícia Civil do DF)</option>
-                                <option value="Auditor Fiscal">Auditor Fiscal (SEFAZ/Receita)</option>
-                                <option value="CGU">CGU</option>
-                                <option value="TCE">TCE</option>
-                                <option value="Ambos">Geral (Todos os Concursos)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Quantidade</label>
-                            <select id="ai-count-select" class="w-full px-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-800 dark:text-slate-100 text-sm">
-                                <option value="1">1 Questão</option>
-                                <option value="2" selected>2 Questões</option>
-                                <option value="3">3 Questões</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Estilo de Banca</label>
-                            <select id="ai-style-select" class="w-full px-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-800 dark:text-slate-100 text-sm">
-                                <option value="Cebraspe (Certo/Errado)">Cebraspe (Certo/Errado)</option>
-                                <option value="FGV (Múltipla Escolha)">FGV (Múltipla Escolha)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <button onclick="generateQuestionsWithAI()" id="btn-generate-ai" class="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-sm flex items-center justify-center gap-2 text-base">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i> Gerar Questão Profissional e Salvar no Banco
-                </button>
-            </div>
-
-            <!-- AI Output Area -->
-            <div id="ai-loading-box" class="hidden max-w-2xl mx-auto p-8 rounded-3xl bg-white dark:bg-slate-800 border border-indigo-500/30 text-center space-y-4">
-                <div class="inline-block animate-spin text-indigo-500">
-                    <i data-lucide="loader-2" class="w-10 h-10"></i>
-                </div>
-                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100" id="ai-loading-status">Analisando jurisprudência e aplicando pegadinhas de banca...</h3>
-                <p class="text-xs text-slate-400">Processando texto base e salvando permanentemente no seu banco.</p>
-            </div>
-
-            <div id="ai-results-container" class="max-w-2xl mx-auto space-y-6"></div>
-        </section>
-
-        <!-- ==================== QUESTION BANK VIEW ==================== -->
-        <section id="view-bank" class="view-section hidden space-y-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-black text-slate-900 dark:text-white">Banco de Questões Integrado</h2>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm">Todas as questões salvas alimentam o módulo de Simulados e o Glossário.</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="cleanDuplicateQuestions()" class="px-3.5 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold text-xs flex items-center gap-2 transition">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i> Remover Repetidas
-                    </button>
-                    <button onclick="openBulkJsonModal()" class="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm flex items-center gap-2 shadow-md transition">
-                        <i data-lucide="file-up" class="w-4 h-4"></i> Importar/Exportar JSON
-                    </button>
-                    <button onclick="openManualQuestionModal()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center gap-2 shadow-md transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Manual
-                    </button>
-                </div>
-            </div>
-
-            <!-- Search and Filter Bar for Bank -->
-            <div class="relative w-full">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
-                <input type="text" id="bank-search-input" oninput="renderBankList()" placeholder="Pesquisar questões por palavra-chave ou disciplina..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <!-- Question Bank List Container -->
-            <div id="bank-list" class="space-y-4"></div>
-        </section>
-
-        <!-- ==================== GLOSSARY VIEW ==================== -->
-        <section id="view-glossary" class="view-section hidden space-y-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-2xl font-black text-slate-900 dark:text-white">Glossário Legal & Jurisprudência</h2>
-                        <span id="glossary-dynamic-tag" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">Auto-extraído</span>
-                    </div>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm">Súmulas vinculantes, artigos de lei e fundamentações compiladas do seu banco.</p>
-                </div>
-                <div class="w-full sm:w-72 relative">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
-                    <input type="text" id="glossary-search" oninput="filterGlossary()" placeholder="Buscar súmula ou lei..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-
-            <div id="glossary-list" class="grid sm:grid-cols-2 gap-4"></div>
-        </section>
-
-        <!-- ==================== STATS VIEW ==================== -->
-        <section id="view-stats" class="view-section hidden space-y-6">
-            <div class="text-center space-y-2 max-w-xl mx-auto">
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white">Meu Desempenho</h2>
-                <p class="text-slate-500 dark:text-slate-400 text-sm">Estatísticas detalhadas de resolução de questões.</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-center">
-                    <div class="text-xs font-extrabold uppercase text-slate-400">Total Respondidas</div>
-                    <div class="text-4xl font-black text-blue-600 dark:text-blue-400" id="stats-page-total">0</div>
-                </div>
-                <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-center">
-                    <div class="text-xs font-extrabold uppercase text-slate-400">Acertos</div>
-                    <div class="text-4xl font-black text-emerald-500" id="stats-page-correct">0</div>
-                </div>
-                <div class="p-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-center">
-                    <div class="text-xs font-extrabold uppercase text-slate-400">Erros</div>
-                    <div class="text-4xl font-black text-rose-500" id="stats-page-wrong">0</div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- ==================== MODAL: IMPORTAR / EXPORTAR JSON EM MASSA ==================== -->
-    <div id="modal-bulk-json" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-2xl space-y-6 my-8 relative">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-3">
-                    <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-500">
-                        <i data-lucide="file-json" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Importar / Exportar JSON em Massa</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Adicione questões de uma só vez ou faça backup.</p>
-                    </div>
-                </div>
-                <button onclick="closeBulkJsonModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <div class="space-y-4">
-                <!-- Backup Automático em Arquivo Local (resolve o reset de dados) -->
-                <div class="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 space-y-3">
-                    <div class="flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="link" class="w-4 h-4 text-emerald-500"></i>
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Backup Automático em Arquivo (recomendado)</span>
-                        </div>
-                        <span id="local-file-status-badge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">Conectado ✓</span>
-                    </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Conecte um arquivo .json do seu computador. A partir daí, toda questão que você salvar é gravada automaticamente nele — sem precisar exportar/importar manualmente toda vez. Funciona no Chrome/Edge, numa aba normal do navegador.</p>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="connectLocalBackupFile(false)" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition">
-                            <i data-lucide="folder-open" class="w-3.5 h-3.5"></i> Usar Backup Existente
-                        </button>
-                        <button onclick="connectLocalBackupFile(true)" class="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold text-xs flex items-center gap-2 transition">
-                            <i data-lucide="file-plus" class="w-3.5 h-3.5"></i> Criar Novo Arquivo
-                        </button>
-                        <button id="btn-reconnect-local-file" onclick="reconnectLocalFile()" class="hidden px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold text-xs flex items-center gap-2 transition">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reconectar
-                        </button>
-                    </div>
-                </div>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-                    <span class="flex-shrink mx-4 text-xs text-slate-400 font-extrabold uppercase">OU (manual)</span>
-                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Opção 1: Enviar Arquivo .json</label>
-                    <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-purple-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50 dark:bg-slate-900/50" onclick="document.getElementById('json-file-input').click()">
-                        <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-purple-500 mb-2"></i>
-                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Clique para selecionar o arquivo .json</p>
-                        <p class="text-xs text-slate-400">Suporta arquivos com várias questões</p>
-                        <input type="file" id="json-file-input" accept=".json" onchange="handleFileUpload(event)" class="hidden">
-                    </div>
-                </div>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-                    <span class="flex-shrink mx-4 text-xs text-slate-400 font-extrabold uppercase">OU</span>
-                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Opção 2: Cole o Código JSON</label>
-                        <button onclick="copySampleJsonSchema()" class="text-xs text-purple-500 hover:underline font-bold flex items-center gap-1">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Modelo de Exemplo
-                        </button>
-                    </div>
-                    <textarea id="bulk-json-input" rows="5" placeholder='[&#10;  {&#10;    "discipline": "DIREITO PENAL",&#10;    "role": "PCDF",&#10;    "statement": "Texto da questão...",&#10;    "options": ["CERTO", "ERRADO"],&#10;    "correctAnswerIndex": 0,&#10;    "explanation": "Comentário...",&#10;    "lawArticles": "Art. 1º CP"&#10;  }&#10;]' class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed"></textarea>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <button onclick="exportQuestionBankToJson()" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center gap-2">
-                        <i data-lucide="download" class="w-4 h-4 text-purple-400"></i> Exportar Meu Banco (.json)
-                    </button>
-
-                    <div class="flex items-center gap-2">
-                        <button onclick="closeBulkJsonModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-                            Cancelar
-                        </button>
-                        <button onclick="processRawJsonImport()" class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition shadow-lg shadow-purple-600/20 flex items-center gap-2">
-                            <i data-lucide="check" class="w-4 h-4"></i> Importar Questões
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="openStudentModal()" id="btnStudentAccess"
+          class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition">
+          Já sou Aluno / Ativar
+        </button>
+        <button onclick="openPlansModal()"
+          class="px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-md shadow-emerald-500/20">
+          Ver Planos (6m / 12m)
+        </button>
+        <button onclick="toggleAdminPanel()" id="btnAdminPanel"
+          class="hidden px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition">
+          ⚙️ Painel Admin
+        </button>
+      </div>
     </div>
+  </header>
 
-    <!-- ==================== MODAL: ADICIONAR QUESTÃO MANUALMENTE ==================== -->
-    <div id="modal-manual-question" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-2xl space-y-6 my-8 relative">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-3">
-                    <div class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
-                        <i data-lucide="edit-3" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Cadastrar Questão Manual</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Adicione questões do seu caderno de estudos.</p>
-                    </div>
-                </div>
-                <button onclick="closeManualQuestionModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+  <!-- PAINEL ADMIN (SÓ APARECE QUANDO ?admin=CBMSD=@2025 ESTÁ NA URL) -->
+  <section id="adminSection" class="hidden bg-amber-950/25 border-b border-amber-500/30">
+    <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-xl font-bold text-amber-300">⚙️ Central Administrativa — PrepSimulados</h2>
+          <p class="text-xs text-slate-400">Gerencie trilhas, múltiplos destaques, links da Yampi, reset de dispositivos e questões sem abrir a planilha.</p>
+        </div>
+        <button onclick="syncAllQuestionsToSheet()" id="btnSyncCloud"
+          class="px-4 py-2 rounded-lg text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition">
+          ☁️ Sincronizar Questões Locais com Planilha
+        </button>
+      </div>
+
+      <!-- Abas internas do Admin -->
+      <div class="flex gap-2 border-b border-slate-800 pb-3 flex-wrap">
+        <button onclick="switchAdminTab('tracks')" id="tabAdminTracks"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">
+          Trilhas & Destaques
+        </button>
+        <button onclick="switchAdminTab('questions')" id="tabAdminQuestions"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">
+          Criar / Importar Questões
+        </button>
+        <button onclick="switchAdminTab('students')" id="tabAdminStudents"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">
+          Reset de Dispositivo (Anti-Rateio)
+        </button>
+      </div>
+
+      <!-- ADMIN TAB 1: TRILHAS & DESTAQUES -->
+      <div id="adminTabTracks" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <form onsubmit="handleSaveTrack(event)" class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <h3 class="font-bold text-white text-sm">Criar ou Editar Trilha</h3>
+          <p class="text-[11px] text-slate-400">Dica: separe múltiplos cargos em destaque por vírgula (ex: <code class="text-emerald-300">CFO PM, CFO Bombeiros</code>).</p>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">ID da Trilha (opcional ao criar; obrigatório para editar)</label>
+            <input id="trkId" type="text" placeholder="Ex: TRIBUNAIS_JURIDICA ou deixe em branco"
+              class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Nome da Trilha *</label>
+            <input id="trkName" type="text" required placeholder="Ex: Carreiras Jurídicas & Tribunais"
+              class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Cargos em Destaque (vírgula)</label>
+              <input id="trkHighlights" type="text" placeholder="Ex: TJCE, TRE, MPU"
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Selo de Status</label>
+              <input id="trkBadge" type="text" placeholder="Ex: 🔥 Edital Quente"
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Outros Cargos da Base</label>
+            <input id="trkOtherRoles" type="text" placeholder="Ex: TRT, TRF, Defensoria"
+              class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Descrição Curta</label>
+            <textarea id="trkDesc" rows="2" placeholder="Disciplinas e foco principal da trilha..."
+              class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Link Yampi — 6 Meses</label>
+              <input id="trkYampi6" type="text" placeholder="https://checkout.yampi.com.br/..."
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Link Yampi — 12 Meses</label>
+              <input id="trkYampi12" type="text" placeholder="https://checkout.yampi.com.br/..."
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+          </div>
+
+          <div class="flex gap-2 pt-2">
+            <button type="submit" id="btnSaveTrack"
+              class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+              Salvar Trilha na Planilha
+            </button>
+            <button type="button" onclick="clearTrackForm()"
+              class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">
+              Limpar
+            </button>
+          </div>
+        </form>
+
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5">
+          <h3 class="font-bold text-white text-sm mb-3">Trilhas Cadastradas</h3>
+          <div id="adminTracksList" class="space-y-3 max-h-[460px] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 2: CRIAR / IMPORTAR QUESTÕES -->
+      <div id="adminTabQuestions" class="hidden grid-cols-1 lg:grid-cols-2 gap-6">
+        <form onsubmit="handleCreateQuestion(event)" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <h3 class="font-bold text-white text-sm">Adicionar Questão Manual</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Trilha</label>
+              <select id="qTrack" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Disciplina</label>
+              <input id="qDiscipline" type="text" required placeholder="Ex: DIREITO PENAL"
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Cargo / Concurso</label>
+              <input id="qRole" type="text" required placeholder="Ex: PCDF ou CFO PM"
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Enunciado *</label>
+            <textarea id="qStatement" rows="3" required
+              class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Alternativas (uma por linha)</label>
+              <textarea id="qOptions" rows="3" placeholder="CERTO&#10;ERRADO"
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">CERTO
+ERRADO</textarea>
+            </div>
+            <div class="space-y-2">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Índice Correto (0 = 1ª, 1 = 2ª...)</label>
+                <input id="qCorrectIdx" type="number" min="0" value="0"
+                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Artigos / Lei</label>
+                <input id="qLaw" type="text" placeholder="Ex: Art. 5º, CF/88"
+                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Comentário / Gabarito</label>
+            <textarea id="qExplanation" rows="2"
+              class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"></textarea>
+          </div>
+
+          <button type="submit" class="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+            Salvar Questão & Enviar para Planilha
+          </button>
+        </form>
+
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <h3 class="font-bold text-white text-sm">Importar / Exportar JSON</h3>
+          <textarea id="jsonImportArea" rows="9" placeholder='Cole aqui um array JSON de questões, ex: [{"discipline":"DIREITO PENAL","role":"PCDF","statement":"...","options":["CERTO","ERRADO"],"correctAnswerIndex":0,"explanation":"..."}]'
+            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono"></textarea>
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="handleImportJson()" class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950">
+              Importar JSON
+            </button>
+            <button onclick="handleExportJson()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200">
+              Exportar JSON Atual
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB 3: RESET DE DISPOSITIVO -->
+      <div id="adminTabStudents" class="hidden max-w-xl bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+        <h3 class="font-bold text-white text-sm">Resetar Dispositivo Vinculado (Anti-Rateio)</h3>
+        <p class="text-xs text-slate-400">Quando um aluno trocar de celular/computador e bloquear no <code class="text-amber-300">Device_ID</code>, informe o e-mail ou CPF dele aqui para liberar um novo aparelho.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input id="resetEmail" type="email" placeholder="E-mail do aluno"
+            class="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+          <input id="resetCpf" type="text" placeholder="CPF (apenas números ou formatado)"
+            class="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+        </div>
+        <button onclick="handleResetDevice()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950">
+          Liberar Novo Dispositivo
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+
+    <!-- VIEW 1: VITRINE DE TRILHAS -->
+    <section id="tracksView" class="space-y-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <span class="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mb-2">
+            Simulados & Questões Comentadas
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Escolha sua trilha de preparação
+          </h1>
+          <p class="text-sm text-slate-400 mt-1">
+            Teste gratuitamente com <strong class="text-slate-200">5 questões por trilha</strong>. Libere acesso completo semestral (6m) ou anual (12m).
+          </p>
+        </div>
+        <div id="tracksStatusText" class="text-xs text-slate-400">Carregando trilhas...</div>
+      </div>
+
+      <div id="tracksGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </section>
+
+    <!-- VIEW 2: ÁREA DE SIMULADO -->
+    <section id="quizView" class="hidden space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+        <div class="flex items-center gap-3">
+          <button onclick="goHome()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200">
+            ← Trilhas
+          </button>
+          <div>
+            <h2 id="activeTrackTitle" class="font-bold text-white text-base"></h2>
+            <p id="activeTrackSub" class="text-xs text-slate-400"></p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="filterDiscipline" onchange="applyQuestionFilters()"
+            class="px-3 py-1.5 rounded-lg text-xs bg-slate-950 border border-slate-700 text-slate-200">
+            <option value="ALL">Todas as Disciplinas</option>
+          </select>
+          <span id="usageCounter" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-emerald-300 border border-slate-700"></span>
+        </div>
+      </div>
+
+      <div id="questionsContainer" class="space-y-5"></div>
+    </section>
+  </main>
+
+  <!-- MODAL: PLANOS (6M / 12M / PASSAPORTE ELITE) -->
+  <div id="plansModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 space-y-5 relative">
+      <button onclick="closeModal('plansModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
+      <div>
+        <span class="text-[11px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300">
+          Acesso Liberado • Anti-Rateio por Dispositivo
+        </span>
+        <h3 id="planModalTitle" class="text-xl font-extrabold text-white mt-2">Escolha seu plano de acesso</h3>
+        <p id="planModalDesc" class="text-xs text-slate-400 mt-1">
+          Após a confirmação do pagamento na Yampi, seu acesso é liberado automaticamente por e-mail ou CPF.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="text-xs font-bold text-slate-400 uppercase">Plano Semestral</div>
+            <div class="text-2xl font-extrabold text-white mt-1">6 Meses</div>
+            <p class="text-xs text-slate-400 mt-1">Ideal para editais em andamento e reta final.</p>
+          </div>
+          <a id="linkYampi6m" href="#" target="_blank" rel="noopener" onclick="handleCheckoutClick(event, '6 Meses')"
+            class="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white transition">
+            Assinar 6 Meses
+          </a>
+        </div>
+
+        <div class="bg-slate-950 border-2 border-emerald-500/60 rounded-xl p-4 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="text-xs font-bold text-emerald-400 uppercase">Mais Escolhido</div>
+            <div class="text-2xl font-extrabold text-white mt-1">12 Meses</div>
+            <p class="text-xs text-slate-400 mt-1">Ciclo completo de preparação + atualizações contínuas.</p>
+          </div>
+          <a id="linkYampi12m" href="#" target="_blank" rel="noopener" onclick="handleCheckoutClick(event, '12 Meses')"
+            class="w-full text-center py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+            Assinar 12 Meses
+          </a>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+        <span class="text-slate-400">Já comprou?</span>
+        <button onclick="closeModal('plansModal'); openStudentModal();" class="text-emerald-400 hover:underline font-semibold">
+          Ativar meu acesso agora →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ATIVAÇÃO DO ALUNO -->
+  <div id="studentModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 relative">
+      <button onclick="closeModal('studentModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
+      <div>
+        <h3 class="text-lg font-extrabold text-white">Ativar Acesso do Aluno</h3>
+        <p class="text-xs text-slate-400 mt-1">
+          Informe o e-mail ou CPF usado na compra. Seu acesso será vinculado a este dispositivo (<code id="currentDeviceLabel" class="text-emerald-300"></code>).
+        </p>
+      </div>
+
+      <form onsubmit="handleStudentLogin(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">E-mail da compra</label>
+          <input id="stuEmail" type="email" placeholder="seuemail@exemplo.com"
+            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">CPF (opcional se informou e-mail)</label>
+          <input id="stuCpf" type="text" placeholder="000.000.000-00"
+            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white" />
+        </div>
+        <p id="studentAuthMsg" class="text-xs text-rose-400 hidden"></p>
+        <button type="submit" id="btnActivateStudent"
+          class="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+          Validar e Liberar Questões
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="hidden fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-xs font-semibold text-white shadow-xl"></div>
+
+  <script>
+    // ==================== CONFIGURAÇÃO PRINCIPAL ====================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1qmBnITdxO-3JU8RA75FJzE5tud-QhG0ZdVv1Z5Jl38IIJHNYZ7A_ZuEwRk3QSqRsLg/exec';
+    const ADMIN_SECRET = 'CBMSD=@2025';
+    const FREE_QUESTION_LIMIT = 5;
+
+    const FALLBACK_TRACKS = [
+      {
+        id: 'POLICIAL_MILITAR_BM',
+        name: 'Segurança Pública Militar & BM',
+        highlights: ['CFO PM', 'CFO Bombeiros'],
+        statusBadge: '🔥 Editais Quentes',
+        otherRoles: 'Soldado PM, Soldado BM',
+        description: 'Direito Militar, Constitucional, Penal, Processo Penal e Legislação Extravagante.',
+        checkout6m: '#',
+        checkout12m: '#'
+      },
+      {
+        id: 'POLICIA_JUDICIARIA',
+        name: 'Polícia Civil & Federal',
+        highlights: ['PCDF'],
+        statusBadge: '⚡ Foco Atual',
+        otherRoles: 'Polícia Federal, PCs Estaduais',
+        description: 'Penal, Processo Penal, Administrativo, Constitucional, Informática, Estatística e Contabilidade.',
+        checkout6m: '#',
+        checkout12m: '#'
+      },
+      {
+        id: 'FISCAL_CONTROLE',
+        name: 'Auditoria & Controle',
+        highlights: ['SEFAZ', 'CGU', 'TCE'],
+        statusBadge: '🎯 Alta Demanda',
+        otherRoles: 'Receita Federal, Controladorias',
+        description: 'Direito Tributário, Contabilidade Geral e Avançada, Auditoria, AFO e Administração.',
+        checkout6m: '#',
+        checkout12m: '#'
+      },
+      {
+        id: 'PASSAPORTE_ELITE',
+        name: 'Passaporte Elite (Todas as Trilhas)',
+        highlights: ['Militar/BM', 'Polícia', 'Fiscal & Controle'],
+        statusBadge: '👑 Acesso Completo',
+        otherRoles: 'Todas as trilhas e atualizações',
+        description: 'Acesso unificado a todas as trilhas de questões, simulados e conteúdo exclusivo.',
+        checkout6m: '#',
+        checkout12m: '#'
+      }
+    ];
+
+    const SAMPLE_QUESTIONS = [
+      {
+        id: 'demo_1',
+        track: 'POLICIAL_MILITAR_BM',
+        discipline: 'DIREITO PENAL MILITAR',
+        role: 'CFO PM / CFO Bombeiros',
+        statement: 'No âmbito do Código Penal Militar (CPM), considera-se militar da ativa aquele que, mesmo estando de folga ou em férias, pratica crime militar em lugar sujeito à administração militar.',
+        options: ['CERTO', 'ERRADO'],
+        correctAnswerIndex: 0,
+        explanation: 'Correto. A condição de militar da ativa permanece e o crime em lugar sob administração militar caracteriza crime militar nos termos do CPM.',
+        lawArticles: 'Art. 9º, CPM',
+        source: 'PrepSimulados'
+      },
+      {
+        id: 'demo_2',
+        track: 'POLICIA_JUDICIARIA',
+        discipline: 'DIREITO PROCESSUAL PENAL',
+        role: 'PCDF',
+        statement: 'O inquérito policial é procedimento administrativo inquisitório, presidido pela autoridade policial, destinado à apuração de infrações penais e de sua autoria.',
+        options: ['CERTO', 'ERRADO'],
+        correctAnswerIndex: 0,
+        explanation: 'Correto. O inquérito policial tem natureza administrativa, é inquisitório e visa subsidiar a propositura da ação penal.',
+        lawArticles: 'Art. 4º e seguintes, CPP',
+        source: 'PrepSimulados'
+      },
+      {
+        id: 'demo_3',
+        track: 'FISCAL_CONTROLE',
+        discipline: 'DIREITO TRIBUTÁRIO',
+        role: 'SEFAZ / CGU / TCE',
+        statement: 'A capacidade tributária ativa consiste na aptidão para figurar no polo ativo da obrigação tributária e pode ser delegada a outra pessoa jurídica de direito público.',
+        options: ['CERTO', 'ERRADO'],
+        correctAnswerIndex: 0,
+        explanation: 'Correto. Diferentemente da competência tributária (indelegável), a capacidade tributária ativa pode ser delegada por lei.',
+        lawArticles: 'Art. 7º, CTN',
+        source: 'PrepSimulados'
+      }
+    ];
+
+    // ==================== ESTADO GLOBAL ====================
+    let state = {
+      isAdmin: false,
+      tracks: [...FALLBACK_TRACKS],
+      activeTrack: null,
+      questions: [],
+      filteredQuestions: [],
+      studentSession: null,
+      deviceId: getOrCreateDeviceId()
+    };
+
+    function getOrCreateDeviceId() {
+      let id = localStorage.getItem('ps_device_id');
+      if (!id) {
+        id = 'dev_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        localStorage.setItem('ps_device_id', id);
+      }
+      return id;
+    }
+
+    function showToast(msg, isError = false) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-xl ${
+        isError ? 'bg-rose-950 border-rose-500/50 text-rose-200' : 'bg-slate-900 border-emerald-500/40 text-emerald-200'
+      }`;
+      el.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => el.classList.add('hidden'), 3600);
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // ==================== INICIALIZAÇÃO ====================
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('currentDeviceLabel').textContent = state.deviceId;
+
+      // Verifica senha do Admin na URL (?admin=CBMSD=@2025)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === ADMIN_SECRET) {
+        state.isAdmin = true;
+        document.getElementById('adminBadge').classList.remove('hidden');
+        document.getElementById('btnAdminPanel').classList.remove('hidden');
+        document.getElementById('adminSection').classList.remove('hidden');
+      }
+
+      // Restaura sessão salva do aluno
+      const savedSession = localStorage.getItem('ps_student_session');
+      if (savedSession) {
+        try {
+          state.studentSession = JSON.parse(savedSession);
+          updateStudentUI();
+        } catch (_) {}
+      }
+
+      // Carrega questões locais em cache
+      const cachedQ = localStorage.getItem('ps_local_questions');
+      if (cachedQ) {
+        try { state.questions = JSON.parse(cachedQ); } catch (_) {}
+      }
+
+      await loadTracksFromBackend();
+      renderTracksGrid();
+      renderAdminTracks();
+      populateTrackSelects();
+    });
+
+    function updateStudentUI() {
+      const badge = document.getElementById('studentBadge');
+      if (state.studentSession && state.studentSession.allowed) {
+        badge.textContent = `ALUNO ATIVO • ${state.studentSession.track}`;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    async function loadTracksFromBackend() {
+      const statusEl = document.getElementById('tracksStatusText');
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=config&_=${Date.now()}`);
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.tracks) && data.tracks.length > 0) {
+          state.tracks = data.tracks;
+          statusEl.textContent = `Sincronizado com a planilha • ${state.tracks.length} trilhas`;
+          return;
+        }
+      } catch (_) {}
+      statusEl.textContent = `Exibindo trilhas base (${state.tracks.length})`;
+    }
+
+    // ==================== VITRINE DE TRILHAS (SUPORTA MÚLTIPLOS DESTAQUES) ====================
+    function renderTracksGrid() {
+      const grid = document.getElementById('tracksGrid');
+      grid.innerHTML = '';
+
+      state.tracks.forEach(track => {
+        const highlights = Array.isArray(track.highlights) && track.highlights.length > 0
+          ? track.highlights
+          : [track.name];
+
+        const highlightsHtml = highlights.length === 1
+          ? `<h3 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">${escapeHtml(highlights[0])}</h3>`
+          : `<div class="flex flex-wrap gap-2 mt-1">
+               ${highlights.map(h => `
+                 <span class="px-3 py-1 rounded-lg text-sm font-extrabold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                   ${escapeHtml(h)}
+                 </span>
+               `).join('')}
+             </div>`;
+
+        const card = document.createElement('div');
+        card.className = 'relative bg-slate-900/90 border border-slate-800 hover:border-emerald-500/40 rounded-2xl p-6 overflow-hidden transition flex flex-col justify-between space-y-5';
+        card.innerHTML = `
+          <div class="watermark-layer">${Array(12).fill('<div class="watermark-item">PREPSIMULADOS</div>').join('')}</div>
+          <div class="relative z-10 space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">${escapeHtml(track.name)}</span>
+              ${track.statusBadge ? `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">${escapeHtml(track.statusBadge)}</span>` : ''}
             </div>
 
-            <form id="form-manual-question" onsubmit="handleManualQuestionSubmit(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Disciplina</label>
-                        <input type="text" id="manual-discipline" required placeholder="Ex: Direito Processual Penal" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
+            ${highlightsHtml}
 
-                    <div>
-                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Carreira / Cargo</label>
-                        <select id="manual-role" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="PCDF">PCDF (Polícia Civil do DF)</option>
-                            <option value="Auditor Fiscal">Auditor Fiscal (SEFAZ/Receita)</option>
-                            <option value="CGU">CGU</option>
-                            <option value="TCE">TCE</option>
-                            <option value="Outros Concursos">Outros Concursos</option>
-                        </select>
-                    </div>
-                </div>
+            <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(track.description || '')}</p>
 
-                <div>
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Formato da Banca</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button type="button" onclick="setManualFormat('cebraspe')" id="format-btn-cebraspe" class="py-2.5 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2">
-                            <i data-lucide="check-square" class="w-4 h-4"></i> Cebraspe (Certo/Errado)
-                        </button>
-                        <button type="button" onclick="setManualFormat('multiple')" id="format-btn-multiple" class="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-2">
-                            <i data-lucide="list" class="w-4 h-4"></i> Múltipla Escolha (A, B, C, D, E)
-                        </button>
-                    </div>
-                </div>
+            ${track.otherRoles ? `<p class="text-[11px] text-slate-400"><strong class="text-slate-300">Também inclui base para:</strong> ${escapeHtml(track.otherRoles)}</p>` : ''}
+          </div>
 
-                <div>
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Enunciado da Questão</label>
-                    <textarea id="manual-statement" required rows="3" placeholder="Digite aqui o texto da questão..." class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
-                </div>
+          <div class="relative z-10 flex items-center gap-2.5 pt-2 border-t border-slate-800/80">
+            <button onclick='startTrackQuiz(${JSON.stringify(track.id)})'
+              class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+              Testar 5 Questões Grátis
+            </button>
+            <button onclick='openPlansForTrack(${JSON.stringify(track.id)})'
+              class="py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition">
+              6m / 12m
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
 
-                <div id="manual-options-container" class="space-y-3"></div>
+    function openPlansForTrack(trackId) {
+      const track = state.tracks.find(t => t.id === trackId) || state.tracks[0];
+      document.getElementById('planModalTitle').textContent = `Acesso — ${track ? track.name : 'PrepSimulados'}`;
+      document.getElementById('planModalDesc').textContent = track && track.highlights && track.highlights.length
+        ? `Foco em: ${track.highlights.join(' • ')}. Escolha o ciclo semestral (6 meses) ou anual (12 meses).`
+        : 'Escolha o plano semestral (6 meses) ou anual (12 meses).';
 
-                <div>
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Gabarito Comentado (Explicação)</label>
-                    <textarea id="manual-explanation" required rows="2" placeholder="Explicação do porquê o gabarito está certo ou errado..." class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500 leading-relaxed"></textarea>
-                </div>
+      const l6 = (track && track.checkout6m && track.checkout6m !== '#') ? track.checkout6m : '#';
+      const l12 = (track && track.checkout12m && track.checkout12m !== '#') ? track.checkout12m : '#';
 
-                <div>
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Fundamentação Legal (Opcional)</label>
-                    <input type="text" id="manual-law" placeholder="Ex: Art. 17 do CPP, Súmula Vinculante 14 STF" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500">
-                </div>
+      document.getElementById('linkYampi6m').href = l6;
+      document.getElementById('linkYampi12m').href = l12;
+      openModal('plansModal');
+    }
 
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <button type="button" onclick="closeManualQuestionModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition shadow-lg shadow-emerald-600/20 flex items-center gap-2">
-                        <i data-lucide="check" class="w-4 h-4"></i> Salvar Questão
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    function openPlansModal() {
+      openPlansForTrack(state.activeTrack ? state.activeTrack.id : null);
+    }
 
-    <!-- APPLICATION LOGIC JS -->
-    <script>
-        // Default initial questions
-        const defaultQuestions = [
-            {
-                id: 'q1',
-                discipline: 'DIREITO PROCESSUAL PENAL',
-                role: 'PCDF',
-                statement: 'O Inquérito Policial, por ter a natureza jurídica de procedimento administrativo inquisitório, prescinde da observância dos princípios do contraditório e da ampla defesa plena, salvo na hipótese do inquérito instaurado pela Polícia Federal para apuração de infrações de repercussão internacional.',
-                options: [
-                    'CERTO - A lei prevê exceção formal para crimes de repercussão internacional.',
-                    'ERRADO - O inquérito policial é inquisitório e não prevê contraditório pleno em nenhuma hipótese, ressalvado o direito de acesso do defensor aos elementos já documentados.'
-                ],
-                correctAnswerIndex: 1,
-                explanation: 'A natureza do Inquérito Policial é administrativa e inquisitória em todos os casos. Não há exceção que imponha contraditório prévio para infrações internacionais.',
-                lawArticles: 'Art. 5º, LXIII, CF/88 e Súmula Vinculante 14 do STF.',
-                source: 'Inédita'
-            },
-            {
-                id: 'q2',
-                discipline: 'CONTABILIDADE GERAL',
-                role: 'Auditor Fiscal',
-                statement: 'No Balanço Patrimonial, o Ativo Não Circulante é composto pelos seguintes subgrupos: Ativo Realizável a Longo Prazo, Investimentos, Imobilizado e Intangível.',
-                options: [
-                    'CERTO - Reflete rigorosamente a divisão estipulada pela Lei das S.A.',
-                    'ERRADO - Faltam os subgrupos Ativo Diferido e Ativo Circulante Especial.'
-                ],
-                correctAnswerIndex: 0,
-                explanation: 'Conforme a Lei nº 6.404/76 (Lei das S.A.), com redação dada pela Lei nº 11.941/09, o Ativo Não Circulante divide-se exatamente em: RLP, Investimentos, Imobilizado e Intangível.',
-                lawArticles: 'Art. 178, § 1º, B da Lei 6.404/1976.',
-                source: 'Inédita'
-            }
-        ];
+    function handleCheckoutClick(e, planLabel) {
+      const href = e.currentTarget.getAttribute('href');
+      if (!href || href === '#') {
+        e.preventDefault();
+        showToast(`Link da Yampi (${planLabel}) ainda não configurado. Cadastre na Yampi e cole no Painel Admin!`, true);
+      }
+    }
 
-        // STORAGE KEYS
-        const LOCAL_STORAGE_KEY = 'prepsim_bank_v5_persistent';
-        const DB_NAME = 'PrepSimuladosDB_v5';
-        const DB_VERSION = 2; // v2: adiciona store 'filehandles' para o backup automático em arquivo local
-        let dbInstance = null;
-        let storageMode = 'LocalStorage';
-        let localFileHandle = null; // Handle do arquivo .json local conectado (File System Access API)
+    // ==================== SIMULADO + PAYWALL DE 5 QUESTÕES ====================
+    function hasFullAccessToTrack(trackId) {
+      if (state.isAdmin) return true;
+      const s = state.studentSession;
+      if (!s || !s.allowed) return false;
+      return s.track === 'PASSAPORTE_ELITE' || s.track === trackId;
+    }
 
-        function isLocalStorageSupported() {
-            try {
-                const testKey = '__test_storage__';
-                localStorage.setItem(testKey, '1');
-                localStorage.removeItem(testKey);
-                return true;
-            } catch (e) {
-                return false;
-            }
+    function getFreeUsedCount(trackId) {
+      return Number(localStorage.getItem(`ps_free_used_${trackId}`) || '0');
+    }
+
+    function incrementFreeUsedCount(trackId) {
+      const next = getFreeUsedCount(trackId) + 1;
+      localStorage.setItem(`ps_free_used_${trackId}`, String(next));
+      return next;
+    }
+
+    async function startTrackQuiz(trackId) {
+      const track = state.tracks.find(t => t.id === trackId) || { id: trackId, name: trackId };
+      state.activeTrack = track;
+
+      document.getElementById('tracksView').classList.add('hidden');
+      document.getElementById('quizView').classList.remove('hidden');
+      document.getElementById('activeTrackTitle').textContent = track.name;
+      document.getElementById('activeTrackSub').textContent = (track.highlights || []).join(' • ');
+
+      // Busca questões da trilha na planilha
+      let list = [];
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=list&track=${encodeURIComponent(track.id)}&_=${Date.now()}`);
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          list = data;
         }
-
-        function initIndexedDB() {
-            return new Promise((resolve) => {
-                if (!window.indexedDB) {
-                    resolve(false);
-                    return;
-                }
-                try {
-                    const request = indexedDB.open(DB_NAME, DB_VERSION);
-                    request.onupgradeneeded = (e) => {
-                        const db = e.target.result;
-                        if (!db.objectStoreNames.contains('questions')) {
-                            db.createObjectStore('questions', { keyPath: 'id' });
-                        }
-                        if (!db.objectStoreNames.contains('filehandles')) {
-                            db.createObjectStore('filehandles');
-                        }
-                    };
-                    request.onsuccess = (e) => {
-                        dbInstance = e.target.result;
-                        resolve(true);
-                    };
-                    request.onerror = () => resolve(false);
-                } catch (err) {
-                    resolve(false);
-                }
-            });
-        }
-
-        async function loadQuestionsFromStorage() {
-            let loadedData = null;
-
-            // 1. Try LocalStorage
-            if (isLocalStorageSupported()) {
-                try {
-                    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-                    if (stored) {
-                        loadedData = JSON.parse(stored);
-                        storageMode = 'LocalStorage + Backup';
-                    }
-                } catch (e) {
-                    console.warn("LocalStorage read warning:", e);
-                }
-            }
-
-            // 2. Try IndexedDB if LocalStorage returned nothing
-            if ((!loadedData || loadedData.length === 0) && dbInstance) {
-                loadedData = await new Promise((resolve) => {
-                    try {
-                        const tx = dbInstance.transaction('questions', 'readonly');
-                        const store = tx.objectStore('questions');
-                        const req = store.getAll();
-                        req.onsuccess = () => resolve(req.result || []);
-                        req.onerror = () => resolve([]);
-                    } catch (e) {
-                        resolve([]);
-                    }
-                });
-                if (loadedData && loadedData.length > 0) {
-                    storageMode = 'IndexedDB Engine';
-                }
-            }
-
-            // 3. Fallback to default initial questions if completely empty
-            if (!loadedData || !Array.isArray(loadedData) || loadedData.length === 0) {
-                loadedData = [...defaultQuestions];
-                await saveQuestionsToStorage(loadedData);
-            } else {
-                saveToIndexedDB(loadedData);
-            }
-
-            updateStorageStatusUI();
-            return loadedData;
-        }
-
-        async function saveQuestionsToStorage(questionsList) {
-            appState.questionBank = questionsList;
-
-            // Save to LocalStorage
-            if (isLocalStorageSupported()) {
-                try {
-                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(questionsList));
-                } catch (e) {
-                    console.warn("LocalStorage quota error:", e);
-                }
-            }
-
-            // Save to IndexedDB
-            await saveToIndexedDB(questionsList);
-
-            // Save to o arquivo local conectado (se houver) — backup automático real em disco
-            if (localFileHandle) {
-                await writeToLocalFileHandle(localFileHandle, questionsList);
-            }
-
-            // Sincroniza com a planilha na nuvem em segundo plano (não bloqueia a UI)
-            syncNewQuestionsToCloud(questionsList);
-
-            // Sync active quiz if necessary
-            if (!appState.activeQuizList || appState.activeQuizList.length === 0) {
-                appState.activeQuizList = [...appState.questionBank];
-            }
-
-            updateStorageStatusUI();
-        }
-
-        function saveToIndexedDB(questionsList) {
-            return new Promise((resolve) => {
-                if (!dbInstance) {
-                    resolve(false);
-                    return;
-                }
-                try {
-                    const tx = dbInstance.transaction('questions', 'readwrite');
-                    const store = tx.objectStore('questions');
-                    store.clear();
-                    questionsList.forEach(q => store.put(q));
-                    tx.oncomplete = () => resolve(true);
-                    tx.onerror = () => resolve(false);
-                } catch (e) {
-                    resolve(false);
-                }
-            });
-        }
-
-        async function deleteQuestionFromStorage(id) {
-            const filtered = appState.questionBank.filter(q => q.id !== id);
-            await saveQuestionsToStorage(filtered);
-        }
-
-        // ===================== BACKUP AUTOMÁTICO EM ARQUIVO LOCAL (File System Access API) =====================
-        // Resolve o problema de "o site reseta as questões": em vez de depender só do localStorage/IndexedDB
-        // do navegador (que ficam presos ao endereço exato da página), o usuário conecta um arquivo .json
-        // real no computador dele. A partir daí, toda vez que uma questão é salva, o próprio arquivo é
-        // atualizado automaticamente — sem precisar mais exportar/importar manualmente.
-        // Funciona em Chrome/Edge (desktop) quando a página está aberta numa aba normal do navegador
-        // (arquivo baixado, ou hospedado no GitHub Pages). Não funciona em Firefox/Safari nem dentro de
-        // pré-visualizações embutidas (iframes) — nesses casos, use normalmente o Importar/Exportar JSON.
-
-        function isFileSystemAccessSupported() {
-            return typeof window.showSaveFilePicker === 'function' && typeof window.showOpenFilePicker === 'function';
-        }
-
-        async function saveFileHandleToDB(handle) {
-            if (!dbInstance) return;
-            try {
-                const tx = dbInstance.transaction('filehandles', 'readwrite');
-                tx.objectStore('filehandles').put(handle, 'localFile');
-            } catch (e) {
-                console.warn('Não foi possível salvar a referência do arquivo local:', e);
-            }
-        }
-
-        function loadFileHandleFromDB() {
-            return new Promise((resolve) => {
-                if (!dbInstance) { resolve(null); return; }
-                try {
-                    const tx = dbInstance.transaction('filehandles', 'readonly');
-                    const req = tx.objectStore('filehandles').get('localFile');
-                    req.onsuccess = () => resolve(req.result || null);
-                    req.onerror = () => resolve(null);
-                } catch (e) {
-                    resolve(null);
-                }
-            });
-        }
-
-        async function writeToLocalFileHandle(handle, questionsList) {
-            try {
-                let permission = await handle.queryPermission({ mode: 'readwrite' });
-                if (permission !== 'granted') {
-                    permission = await handle.requestPermission({ mode: 'readwrite' });
-                }
-                if (permission !== 'granted') return false;
-
-                const writable = await handle.createWritable();
-                await writable.write(JSON.stringify(questionsList, null, 2));
-                await writable.close();
-                return true;
-            } catch (e) {
-                console.warn('Erro ao gravar automaticamente no arquivo local:', e);
-                return false;
-            }
-        }
-
-        function updateLocalFileStatusUI(connected) {
-            const badge = document.getElementById('local-file-status-badge');
-            const reconnectBtn = document.getElementById('btn-reconnect-local-file');
-            if (badge) badge.classList.toggle('hidden', !connected);
-            if (reconnectBtn) reconnectBtn.classList.toggle('hidden', connected);
-        }
-
-        // Ao carregar a página, tenta reconectar automaticamente no último arquivo usado
-        // (o navegador exige confirmação de permissão de novo por segurança, sem precisar escolher o arquivo de novo).
-        async function tryReconnectLocalFile() {
-            if (!isFileSystemAccessSupported()) return;
-            const handle = await loadFileHandleFromDB();
-            if (!handle) return;
-            try {
-                const permission = await handle.queryPermission({ mode: 'readwrite' });
-                if (permission === 'granted') {
-                    localFileHandle = handle;
-                    updateLocalFileStatusUI(true);
-                } else {
-                    localFileHandle = handle;
-                    updateLocalFileStatusUI(false);
-                }
-            } catch (e) {
-                updateLocalFileStatusUI(false);
-            }
-        }
-
-        // Chamado pelo botão "Reconectar" quando a permissão precisa ser confirmada de novo pelo usuário.
-        async function reconnectLocalFile() {
-            if (!localFileHandle) return;
-            try {
-                const permission = await localFileHandle.requestPermission({ mode: 'readwrite' });
-                if (permission === 'granted') {
-                    updateLocalFileStatusUI(true);
-                    alertToast('Arquivo local reconectado com sucesso!');
-                } else {
-                    alertToast('Permissão negada. Conecte o arquivo novamente.');
-                }
-            } catch (e) {
-                alertToast('Não foi possível reconectar. Conecte o arquivo novamente.');
-            }
-        }
-
-        async function connectLocalBackupFile(createNew) {
-            if (!isFileSystemAccessSupported()) {
-                alertToast('Seu navegador não suporta esse recurso (funciona no Chrome/Edge). Use o Importar/Exportar JSON normalmente.');
-                return;
-            }
-            try {
-                let handle;
-                if (createNew) {
-                    handle = await window.showSaveFilePicker({
-                        suggestedName: 'banco_questoes_prepsim.json',
-                        types: [{ description: 'Arquivo JSON', accept: { 'application/json': ['.json'] } }]
-                    });
-                    await writeToLocalFileHandle(handle, appState.questionBank);
-                } else {
-                    const [pickedHandle] = await window.showOpenFilePicker({
-                        types: [{ description: 'Arquivo JSON', accept: { 'application/json': ['.json'] } }]
-                    });
-                    handle = pickedHandle;
-                    const file = await handle.getFile();
-                    const text = await file.text();
-                    const parsed = JSON.parse(text);
-                    await importJsonArray(parsed);
-                }
-
-                localFileHandle = handle;
-                await saveFileHandleToDB(handle);
-                updateLocalFileStatusUI(true);
-                alertToast('Arquivo local conectado! A partir de agora, tudo é salvo nele automaticamente.');
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.warn(err);
-                    alertToast('Não foi possível conectar ao arquivo. Tente novamente.');
-                }
-            }
-        }
-
-        // ===================== NUVEM (Google Sheets + Apps Script) =====================
-        // A planilha vira o banco "de verdade" para grandes volumes (dezenas de milhares de questões).
-        // O app continua salvando local (rápido, funciona offline), e envia em segundo plano toda
-        // questão nova para a planilha. Os simulados, quando a nuvem está disponível, pedem uma
-        // amostra aleatória direto de lá (sem precisar carregar o banco inteiro no navegador).
-
-        const DEFAULT_CLOUD_API_URL = 'https://script.google.com/macros/s/AKfycbz1qmBnITdxO-3JU8RA75FJzE5tud-QhG0ZdVv1Z5Jl38IIJHNYZ7A_ZuEwRk3QSqRsLg/exec';
-        const CLOUD_URL_STORAGE_KEY = 'prepsim_cloud_api_url';
-        const SYNCED_IDS_KEY = 'prepsim_synced_ids_v1';
-
-        function getCloudApiUrl() {
-            try {
-                return (localStorage.getItem(CLOUD_URL_STORAGE_KEY) || DEFAULT_CLOUD_API_URL || '').trim();
-            } catch (e) {
-                return DEFAULT_CLOUD_API_URL;
-            }
-        }
-
-        function isCloudConfigured() {
-            return !!getCloudApiUrl();
-        }
-
-        function configureCloudApiUrl() {
-            const current = getCloudApiUrl();
-            const url = prompt('Cole aqui a URL do seu Google Apps Script (terminando em /exec):', current || '');
-            if (url === null) return;
-            try {
-                localStorage.setItem(CLOUD_URL_STORAGE_KEY, url.trim());
-                alertToast('URL da nuvem atualizada!');
-                updateCloudStatusUI(null);
-            } catch (e) {
-                alertToast('Não foi possível salvar a URL.');
-            }
-        }
-
-        function getSyncedIdsSet() {
-            try {
-                const raw = localStorage.getItem(SYNCED_IDS_KEY);
-                return new Set(raw ? JSON.parse(raw) : []);
-            } catch (e) {
-                return new Set();
-            }
-        }
-
-        function addSyncedIds(ids) {
-            try {
-                const set = getSyncedIdsSet();
-                ids.forEach(id => id && set.add(id));
-                localStorage.setItem(SYNCED_IDS_KEY, JSON.stringify(Array.from(set)));
-            } catch (e) {
-                console.warn('Não foi possível registrar IDs sincronizados:', e);
-            }
-        }
-
-        function updateCloudStatusUI(state) {
-            // state: true = ok, false = erro, null/undefined = neutro
-            const badge = document.getElementById('cloud-status-badge');
-            if (!badge) return;
-            badge.classList.remove('bg-emerald-500/10', 'text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500/20',
-                                    'bg-red-500/10', 'text-red-500', 'border-red-500/20',
-                                    'bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'border-slate-300', 'dark:border-slate-600');
-            if (state === true) {
-                badge.classList.add('bg-emerald-500/10', 'text-emerald-600', 'dark:text-emerald-400', 'border-emerald-500/20');
-                badge.innerText = '☁️ Sincronizado';
-            } else if (state === false) {
-                badge.classList.add('bg-red-500/10', 'text-red-500', 'border-red-500/20');
-                badge.innerText = '☁️ Erro na nuvem';
-            } else {
-                badge.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'border-slate-300', 'dark:border-slate-600');
-                badge.innerText = '☁️ Nuvem';
-            }
-        }
-
-        // Clique no badge do header: sincroniza agora; segure Alt/Option e clique para trocar a URL configurada.
-        function cloudBadgeClicked(event) {
-            if (event && (event.altKey || event.metaKey)) {
-                configureCloudApiUrl();
-                return;
-            }
-            syncFromCloudNow();
-        }
-
-        // Envia para a planilha, em segundo plano, apenas as questões que ainda não foram sincronizadas.
-        async function syncNewQuestionsToCloud(fullBankList) {
-            if (!isCloudConfigured()) return;
-            const synced = getSyncedIdsSet();
-            const pending = (fullBankList || []).filter(q => q && q.id && !synced.has(q.id));
-            if (pending.length === 0) return;
-
-            try {
-                const response = await fetch(getCloudApiUrl(), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS (Apps Script não trata OPTIONS)
-                    body: JSON.stringify(pending)
-                });
-                const result = await response.json();
-                if (result && result.success) {
-                    addSyncedIds(pending.map(q => q.id));
-                    updateCloudStatusUI(true);
-                } else {
-                    updateCloudStatusUI(false);
-                }
-            } catch (err) {
-                console.warn('Falha ao sincronizar com a nuvem:', err);
-                updateCloudStatusUI(false);
-            }
-        }
-
-        // Busca uma amostra aleatória direto da planilha — o navegador nunca precisa carregar
-        // o banco inteiro (essencial para dezenas de milhares de questões). Retorna null se falhar.
-        async function fetchCloudSample(count, discipline, role) {
-            if (!isCloudConfigured()) return null;
-            try {
-                const params = new URLSearchParams({ action: 'sample', count: String(count || 10) });
-                if (discipline && discipline !== 'ALL') params.set('discipline', discipline);
-                if (role && role !== 'ALL') params.set('role', role);
-                const response = await fetch(`${getCloudApiUrl()}?${params.toString()}`);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                const data = await response.json();
-                if (!Array.isArray(data)) return null;
-                updateCloudStatusUI(true);
-                return data;
-            } catch (err) {
-                console.warn('Não foi possível buscar amostra da nuvem, usando banco local:', err);
-                updateCloudStatusUI(false);
-                return null;
-            }
-        }
-
-        // Puxa a lista inteira da planilha e mescla no banco local — útil ao abrir em um dispositivo novo.
-        async function syncFromCloudNow() {
-            if (!isCloudConfigured()) {
-                alertToast('Nenhuma URL da nuvem configurada. Segure Alt e clique no botão da nuvem para configurar.');
-                return;
-            }
-            alertToast('Buscando questões da planilha...');
-            try {
-                const response = await fetch(`${getCloudApiUrl()}?action=list`);
-                const data = await response.json();
-                if (!Array.isArray(data)) throw new Error('Resposta inválida da nuvem');
-                addSyncedIds(data.map(q => q.id)); // já veio de lá, não precisa reenviar
-                await importJsonArray(data);
-                updateCloudStatusUI(true);
-                alertToast(`${data.length} questões sincronizadas da nuvem!`);
-            } catch (err) {
-                console.warn(err);
-                updateCloudStatusUI(false);
-                alertToast('Erro ao buscar da nuvem. Confira a URL configurada (Alt + clique no botão Nuvem).');
-            }
-        }
-
-        // Normaliza o enunciado de forma agressiva para detectar duplicatas reais:
-        // remove acentos, pontuação, espaços não separáveis (\u00A0), quebras de linha e
-        // diferenças de maiúsculas/minúsculas que antes faziam o dedup falhar silenciosamente.
-        function normalizeForDedup(text) {
-            return (text || '')
-                .toString()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentuação
-                .toLowerCase()
-                .replace(/["'“”‘’.,;:!?()\[\]{}\-–—_/\\]/g, '') // remove pontuação comum
-                .replace(/\s+/g, ' ') // colapsa espaços, tabs, quebras de linha e nbsp
-                .trim();
-        }
-
-        // Similaridade por interseção de palavras (Jaccard) — pega questões quase idênticas
-        // (ex: só mudou um artigo, um número ou uma palavra de conectivo).
-        function jaccardSimilarity(normA, normB) {
-            if (!normA || !normB) return 0;
-            const setA = new Set(normA.split(' ').filter(Boolean));
-            const setB = new Set(normB.split(' ').filter(Boolean));
-            if (setA.size === 0 || setB.size === 0) return 0;
-            let intersection = 0;
-            setA.forEach(word => { if (setB.has(word)) intersection++; });
-            const unionSize = setA.size + setB.size - intersection;
-            return unionSize === 0 ? 0 : intersection / unionSize;
-        }
-
-        const DUPLICATE_SIMILARITY_THRESHOLD = 0.9; // 90% das palavras em comum = duplicata
-
-        function deduplicateQuestionsArray(list) {
-            const seenNormalized = [];
-            const uniqueList = [];
-
-            for (const q of list) {
-                const norm = normalizeForDedup(q.statement);
-
-                if (norm === '') {
-                    // Sem enunciado válido: não arrisca descartar, mantém.
-                    uniqueList.push(q);
-                    continue;
-                }
-
-                const isDuplicate = seenNormalized.some(prevNorm => {
-                    if (prevNorm === norm) return true;
-                    return jaccardSimilarity(prevNorm, norm) >= DUPLICATE_SIMILARITY_THRESHOLD;
-                });
-
-                if (!isDuplicate) {
-                    seenNormalized.push(norm);
-                    uniqueList.push(q);
-                }
-            }
-            return uniqueList;
-        }
-
-        async function cleanDuplicateQuestions() {
-            const initialLength = appState.questionBank.length;
-            const cleaned = deduplicateQuestionsArray(appState.questionBank);
-            const removedCount = initialLength - cleaned.length;
-
-            if (removedCount > 0) {
-                await saveQuestionsToStorage(cleaned);
-                renderBankList();
-                renderGlossary();
-                updateStatsUI();
-                alertToast(`Foram removidas ${removedCount} questão(ões) duplicada(s)!`);
-            } else {
-                alertToast('Nenhuma questão duplicada foi encontrada no seu banco.');
-            }
-        }
-
-        function updateStorageStatusUI() {
-            const statusText = document.getElementById('storage-status-text');
-            const storageTypeTag = document.getElementById('stat-storage-type');
-            
-            if (statusText) {
-                statusText.innerText = `${appState.questionBank.length} Salvas (${storageMode})`;
-            }
-            if (storageTypeTag) {
-                storageTypeTag.innerText = `Armazenado via ${storageMode}`;
-            }
-        }
-
-        // Global State Management
-        const appState = {
-            solvedCount: parseInt(localStorage.getItem('prepsim_solved_count_v4') || '0'),
-            correctCount: parseInt(localStorage.getItem('prepsim_correct_count_v4') || '0'),
-            wrongCount: parseInt(localStorage.getItem('prepsim_wrong_count_v4') || '0'),
-            currentQuizIndex: 0,
-            activeQuizList: [],
-            selectedOptionIndex: null,
-            questionBank: [],
-            manualFormat: 'cebraspe'
-        };
-
-        const baseGlossaryData = [
-            {
-                title: 'Súmula Vinculante 14 - STF',
-                category: 'Processual Penal',
-                content: 'É direito do defensor, no interesse do representado, ter acesso amplo aos elementos de prova que, já documentados em procedimento investigatório praticado por órgão com competência de polícia judiciária, digam respeito ao exercício do direito de defesa.'
-            }
-        ];
-
-        function getCombinedGlossary() {
-            const extractedItems = [];
-            appState.questionBank.forEach((q) => {
-                if (q.lawArticles && q.lawArticles.trim() !== '') {
-                    extractedItems.push({
-                        title: `${q.lawArticles}`,
-                        category: `${q.discipline || 'Legislação'} (${q.role || 'Banco'})`,
-                        content: `Extraído do Banco de Questões:\n\n"${q.explanation}"\n\n(Referência: "${q.statement.substring(0, 110)}...")`
-                    });
-                }
-            });
-            return [...baseGlossaryData, ...extractedItems];
-        }
-
-        function persistStats() {
-            localStorage.setItem('prepsim_solved_count_v4', appState.solvedCount.toString());
-            localStorage.setItem('prepsim_correct_count_v4', appState.correctCount.toString());
-            localStorage.setItem('prepsim_wrong_count_v4', appState.wrongCount.toString());
-        }
-
-        // Initialize Application
-        window.addEventListener('DOMContentLoaded', async () => {
-            lucide.createIcons();
-            await initIndexedDB();
-            appState.questionBank = await loadQuestionsFromStorage();
-            appState.activeQuizList = [...appState.questionBank];
-            await tryReconnectLocalFile();
-            updateCloudStatusUI(null);
-            if (appState.questionBank.length === 0 && isCloudConfigured()) {
-                syncFromCloudNow(); // primeiro acesso num dispositivo novo: puxa o que já está na planilha
-            }
-            renderCurrentQuizQuestion();
-            renderGlossary();
-            renderBankList();
-            renderManualOptionsForm();
-            updateStatsUI();
-        });
-
-        // Router
-        function navigateTo(viewName) {
-            document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
-            const target = document.getElementById('view-' + viewName);
-            if (target) {
-                target.classList.remove('hidden');
-            }
-            if (viewName === 'glossary') renderGlossary();
-            if (viewName === 'bank') renderBankList();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function toggleMobileMenu() {
-            document.getElementById('mobile-menu').classList.toggle('hidden');
-        }
-
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-        });
-
-        // Quiz Logic
-        async function startQuickQuiz(filterRole) {
-            let cloudSample = await fetchCloudSample(10, null, filterRole === 'ALL' ? null : filterRole);
-
-            if (cloudSample && cloudSample.length > 0) {
-                appState.activeQuizList = cloudSample;
-            } else if (filterRole === 'ALL') {
-                appState.activeQuizList = [...appState.questionBank];
-            } else {
-                appState.activeQuizList = appState.questionBank.filter(q => q.role && q.role.toUpperCase().includes(filterRole));
-                if (appState.activeQuizList.length === 0) appState.activeQuizList = [...appState.questionBank];
-            }
-            appState.currentQuizIndex = 0;
-            navigateTo('quiz');
-            renderCurrentQuizQuestion();
-        }
-
-        function renderCurrentQuizQuestion() {
-            if (!appState.activeQuizList || appState.activeQuizList.length === 0) {
-                appState.activeQuizList = [...appState.questionBank];
-            }
-            const q = appState.activeQuizList[appState.currentQuizIndex];
-            if (!q) return;
-
-            document.getElementById('quiz-discipline-tag').innerText = q.discipline || 'GERAL';
-            document.getElementById('quiz-role-badge').innerText = q.role || 'Geral';
-            document.getElementById('quiz-source-badge').innerText = q.source || 'Cadastrada';
-            document.getElementById('quiz-statement').innerText = q.statement;
-            
-            const currentNumber = appState.currentQuizIndex + 1;
-            const totalNumber = appState.activeQuizList.length;
-            document.getElementById('quiz-progress-text').innerText = `Questão ${currentNumber} de ${totalNumber}`;
-            
-            // Progress Bar Animation
-            const percentage = Math.round((currentNumber / totalNumber) * 100);
-            const progressBar = document.getElementById('quiz-progress-bar');
-            if (progressBar) {
-                progressBar.style.width = `${percentage}%`;
-            }
-
-            appState.selectedOptionIndex = null;
-            document.getElementById('quiz-explanation-box').classList.add('hidden');
-            document.getElementById('btn-submit-answer').classList.remove('hidden');
-            document.getElementById('btn-next-question').classList.add('hidden');
-
-            const optionsContainer = document.getElementById('quiz-options-container');
-            optionsContainer.innerHTML = '';
-
-            if (q.options && Array.isArray(q.options)) {
-                q.options.forEach((opt, idx) => {
-                    const btn = document.createElement('button');
-                    btn.className = `w-full text-left p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:border-blue-500 transition text-sm font-medium flex items-start gap-3 option-btn-${idx}`;
-                    btn.onclick = () => selectQuizOption(idx);
-                    btn.innerHTML = `
-                        <span class="w-6 h-6 rounded-full border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${String.fromCharCode(65 + idx)}</span>
-                        <span class="text-slate-800 dark:text-slate-200">${opt}</span>
-                    `;
-                    optionsContainer.appendChild(btn);
-                });
-            }
-        }
-
-        function selectQuizOption(index) {
-            appState.selectedOptionIndex = index;
-            const container = document.getElementById('quiz-options-container');
-            Array.from(container.children).forEach((child, idx) => {
-                if (idx === index) {
-                    child.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50', 'dark:bg-blue-950/40');
-                } else {
-                    child.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50', 'dark:bg-blue-950/40');
-                }
-            });
-        }
-
-        function checkQuizAnswer() {
-            if (appState.selectedOptionIndex === null) {
-                alertToast('Selecione uma opção antes de responder!');
-                return;
-            }
-
-            const q = appState.activeQuizList[appState.currentQuizIndex];
-            const isCorrect = appState.selectedOptionIndex === q.correctAnswerIndex;
-
-            appState.solvedCount++;
-            if (isCorrect) appState.correctCount++; else appState.wrongCount++;
-            persistStats();
-            updateStatsUI();
-
-            const expBox = document.getElementById('quiz-explanation-box');
-            const resultTitle = document.getElementById('quiz-result-title');
-            const expText = document.getElementById('quiz-explanation-text');
-            const lawArt = document.getElementById('quiz-law-article');
-
-            expBox.classList.remove('hidden');
-            if (isCorrect) {
-                resultTitle.className = 'flex items-center gap-2 font-bold text-sm text-emerald-500';
-                resultTitle.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i> Resposta Correta! Parabéns.`;
-            } else {
-                resultTitle.className = 'flex items-center gap-2 font-bold text-sm text-rose-500';
-                resultTitle.innerHTML = `<i data-lucide="x-circle" class="w-5 h-5"></i> Resposta Incorreta! Gabarito oficial: Opção ${String.fromCharCode(65 + q.correctAnswerIndex)}.`;
-            }
-
-            expText.innerText = q.explanation;
-            lawArt.innerText = q.lawArticles || '';
-
-            document.getElementById('btn-submit-answer').classList.add('hidden');
-            document.getElementById('btn-next-question').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function nextQuizQuestion() {
-            appState.currentQuizIndex = (appState.currentQuizIndex + 1) % appState.activeQuizList.length;
-            renderCurrentQuizQuestion();
-        }
-
-        // Glossary Logic
-        function renderGlossary(filter = '') {
-            const container = document.getElementById('glossary-list');
-            container.innerHTML = '';
-
-            const list = getCombinedGlossary();
-            const items = list.filter(item => 
-                item.title.toLowerCase().includes(filter.toLowerCase()) || 
-                item.content.toLowerCase().includes(filter.toLowerCase()) ||
-                item.category.toLowerCase().includes(filter.toLowerCase())
-            );
-
-            if (items.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-2 p-8 text-center rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                        <i data-lucide="book-open" class="w-8 h-8 mx-auto text-slate-400"></i>
-                        <p class="font-bold text-slate-600 dark:text-slate-300">Nenhum item legal encontrado.</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2';
-                card.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-amber-500 uppercase tracking-wider">${item.category}</span>
-                    </div>
-                    <h3 class="font-bold text-slate-900 dark:text-white text-base">${item.title}</h3>
-                    <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">${item.content}</p>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function filterGlossary() {
-            const term = document.getElementById('glossary-search').value;
-            renderGlossary(term);
-        }
-
-        // BULK JSON IMPORT & EXPORT
-        function openBulkJsonModal() {
-            document.getElementById('modal-bulk-json').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function closeBulkJsonModal() {
-            document.getElementById('modal-bulk-json').classList.add('hidden');
-            document.getElementById('bulk-json-input').value = '';
-            document.getElementById('json-file-input').value = '';
-        }
-
-        function copySampleJsonSchema() {
-            const sampleJson = [
-                {
-                    "discipline": "DIREITO PROCESSUAL PENAL",
-                    "role": "PCDF",
-                    "statement": "O Inquérito Policial tem natureza administrativa inquisitória e indisponível.",
-                    "options": ["CERTO", "ERRADO"],
-                    "correctAnswerIndex": 0,
-                    "explanation": "Artigo 17 do CPP estipula que a autoridade policial não pode arquivar inquérito.",
-                    "lawArticles": "Art. 17 CPP",
-                    "source": "Simulado Importado"
-                }
-            ];
-            navigator.clipboard.writeText(JSON.stringify(sampleJson, null, 2));
-            alertToast('Modelo JSON copiado para a área de transferência!');
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    await importJsonArray(parsed);
-                } catch (err) {
-                    alertToast('Erro ao ler o arquivo JSON. Formato inválido!');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        async function processRawJsonImport() {
-            const text = document.getElementById('bulk-json-input').value.trim();
-            if (!text) {
-                alertToast('Por favor, envie um arquivo ou cole o código JSON!');
-                return;
-            }
-
-            try {
-                const parsed = JSON.parse(text);
-                await importJsonArray(parsed);
-            } catch (err) {
-                alertToast('Código JSON malformado! Verifique a sintaxe.');
-            }
-        }
-
-        async function importJsonArray(data) {
-            const list = Array.isArray(data) ? data : [data];
-            const validatedList = list.map((q, i) => ({
-                id: q.id || 'json_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-                discipline: (q.discipline || 'GERAL').toUpperCase(),
-                role: q.role || 'Concurso Geral',
-                statement: q.statement || 'Enunciado não informado',
-                options: Array.isArray(q.options) && q.options.length > 0 ? q.options : ['CERTO', 'ERRADO'],
-                correctAnswerIndex: typeof q.correctAnswerIndex === 'number' ? q.correctAnswerIndex : 0,
-                explanation: q.explanation || 'Sem comentário cadastrado.',
-                lawArticles: q.lawArticles || '',
-                source: q.source || 'Importado via JSON'
-            }));
-
-            // Auto Deduplicate
-            const combined = deduplicateQuestionsArray([...validatedList, ...appState.questionBank]);
-            await saveQuestionsToStorage(combined);
-
-            renderBankList();
-            renderGlossary();
-            updateStatsUI();
-            closeBulkJsonModal();
-
-            alertToast(`Sucesso! ${validatedList.length} questão(ões) processada(s) e salvas com deduplicação ativa!`);
-        }
-
-        function exportQuestionBankToJson() {
-            if (appState.questionBank.length === 0) {
-                alertToast('Nenhuma questão para exportar.');
-                return;
-            }
-
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState.questionBank, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `banco_questoes_prepsim_${Date.now()}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-
-            alertToast('Download do arquivo JSON iniciado!');
-        }
-
-        // MANUAL QUESTION MODAL LOGIC
-        function openManualQuestionModal() {
-            document.getElementById('modal-manual-question').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function closeManualQuestionModal() {
-            document.getElementById('modal-manual-question').classList.add('hidden');
-            document.getElementById('form-manual-question').reset();
-            setManualFormat('cebraspe');
-        }
-
-        function setManualFormat(format) {
-            appState.manualFormat = format;
-            const btnCebraspe = document.getElementById('format-btn-cebraspe');
-            const btnMultiple = document.getElementById('format-btn-multiple');
-
-            if (format === 'cebraspe') {
-                btnCebraspe.className = 'py-2.5 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2';
-                btnMultiple.className = 'py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-2';
-            } else {
-                btnMultiple.className = 'py-2.5 px-4 rounded-xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2';
-                btnCebraspe.className = 'py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-2';
-            }
-            renderManualOptionsForm();
-        }
-
-        function renderManualOptionsForm() {
-            const container = document.getElementById('manual-options-container');
-            container.innerHTML = '';
-
-            if (appState.manualFormat === 'cebraspe') {
-                container.innerHTML = `
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Gabarito Oficial</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center gap-2 cursor-pointer font-bold text-sm">
-                            <input type="radio" name="manual-cebraspe-answer" value="0" checked class="accent-emerald-500 w-4 h-4">
-                            <span class="text-emerald-600 dark:text-emerald-400">CERTO</span>
-                        </label>
-                        <label class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center gap-2 cursor-pointer font-bold text-sm">
-                            <input type="radio" name="manual-cebraspe-answer" value="1" class="accent-emerald-500 w-4 h-4">
-                            <span class="text-rose-600 dark:text-rose-400">ERRADO</span>
-                        </label>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Alternativas e Gabarito Correto</label>
-                    <div class="space-y-2">
-                        ${['A', 'B', 'C', 'D', 'E'].map((letter, idx) => `
-                            <div class="flex items-center gap-2">
-                                <label class="flex items-center gap-1.5 shrink-0 px-2 py-2 rounded-lg bg-slate-100 dark:bg-slate-900 text-xs font-bold cursor-pointer">
-                                    <input type="radio" name="manual-multiple-answer" value="${idx}" ${idx === 0 ? 'checked' : ''} class="accent-emerald-500 w-4 h-4">
-                                    <span>${letter}</span>
-                                </label>
-                                <input type="text" id="manual-opt-${idx}" required placeholder="Texto da alternativa ${letter}..." class="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-        }
-
-        async function handleManualQuestionSubmit(event) {
-            event.preventDefault();
-            
-            const discipline = document.getElementById('manual-discipline').value.trim();
-            const role = document.getElementById('manual-role').value;
-            const statement = document.getElementById('manual-statement').value.trim();
-            const explanation = document.getElementById('manual-explanation').value.trim();
-            const lawArticles = document.getElementById('manual-law').value.trim();
-            
-            let options = [];
-            let correctAnswerIndex = 0;
-
-            if (appState.manualFormat === 'cebraspe') {
-                options = ['CERTO', 'ERRADO'];
-                const checked = document.querySelector('input[name="manual-cebraspe-answer"]:checked');
-                correctAnswerIndex = checked ? parseInt(checked.value) : 0;
-            } else {
-                for (let i = 0; i < 5; i++) {
-                    const optInput = document.getElementById(`manual-opt-${i}`);
-                    options.push(optInput ? optInput.value.trim() : '');
-                }
-                const checked = document.querySelector('input[name="manual-multiple-answer"]:checked');
-                correctAnswerIndex = checked ? parseInt(checked.value) : 0;
-            }
-
-            const newQuestion = {
-                id: 'manual_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-                discipline: discipline.toUpperCase(),
-                role,
-                statement,
-                options,
-                correctAnswerIndex,
-                explanation,
-                lawArticles,
-                source: 'Caderno Manual'
-            };
-
-            const updatedBank = deduplicateQuestionsArray([newQuestion, ...appState.questionBank]);
-            await saveQuestionsToStorage(updatedBank);
-
-            renderBankList();
-            renderGlossary();
-            updateStatsUI();
-            closeManualQuestionModal();
-
-            alertToast('Questão cadastrada e salva permanentemente!');
-        }
-
-        function renderBankList() {
-            const container = document.getElementById('bank-list');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            const searchInput = document.getElementById('bank-search-input');
-            const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-            
-            const filteredBank = appState.questionBank.filter(q => 
-                (q.statement && q.statement.toLowerCase().includes(searchTerm)) ||
-                (q.discipline && q.discipline.toLowerCase().includes(searchTerm)) ||
-                (q.role && q.role.toLowerCase().includes(searchTerm))
-            );
-
-            if (filteredBank.length === 0) {
-                container.innerHTML = `
-                    <div class="p-8 text-center rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                        <i data-lucide="database" class="w-8 h-8 mx-auto text-slate-400 mb-2"></i>
-                        <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">Nenhuma questão encontrada.</p>
-                    </div>
-                `;
-                document.querySelectorAll('#stat-bank-count').forEach(el => el.innerText = appState.questionBank.length);
-                lucide.createIcons();
-                return;
-            }
-
-            document.querySelectorAll('#stat-bank-count').forEach(el => el.innerText = appState.questionBank.length);
-
-            filteredBank.forEach(q => {
-                const item = document.createElement('div');
-                item.className = 'p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-4 justify-between items-start';
-                item.innerHTML = `
-                    <div class="space-y-1 flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${q.discipline || 'GERAL'}</span>
-                            <span class="text-[10px] uppercase font-bold text-slate-400">${q.role || 'Geral'}</span>
-                            <span class="text-[10px] font-semibold text-indigo-400">(${q.source || 'Banco'})</span>
-                        </div>
-                        <p class="text-sm text-slate-700 dark:text-slate-200 font-medium line-clamp-2">${q.statement}</p>
-                    </div>
-                    <button onclick="deleteQuestion('${q.id}')" class="p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                `;
-                container.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-        async function deleteQuestion(id) {
-            await deleteQuestionFromStorage(id);
-            renderBankList();
-            renderGlossary();
-            updateStatsUI();
-            alertToast('Questão removida do banco com sucesso.');
-        }
-
-        function updateStatsUI() {
-            document.getElementById('stat-total-solved').innerText = appState.solvedCount;
-            document.getElementById('stats-page-total').innerText = appState.solvedCount;
-            document.getElementById('stats-page-correct').innerText = appState.correctCount;
-            document.getElementById('stats-page-wrong').innerText = appState.wrongCount;
-            
-            const accuracy = appState.solvedCount > 0 ? Math.round((appState.correctCount / appState.solvedCount) * 100) : 0;
-            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
-            
-            const glossaryCount = getCombinedGlossary().length;
-            document.getElementById('nav-glossary-badge').innerText = glossaryCount;
-            document.getElementById('stat-glossary-count').innerText = glossaryCount;
-
-            renderDisciplineCards();
-        }
-
-        // Retorna a lista de disciplinas distintas presentes no banco, com a contagem de questões de cada uma.
-        function getUniqueDisciplines() {
-            const counts = {};
-            appState.questionBank.forEach(q => {
-                const disc = (q.discipline || 'GERAL').trim();
-                if (!disc) return;
-                counts[disc] = (counts[disc] || 0) + 1;
-            });
-            return Object.keys(counts)
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'))
-                .map(disc => ({ discipline: disc, count: counts[disc] }));
-        }
-
-        // Renderiza os cards de "Praticar por Disciplina" na Home, um por disciplina cadastrada no banco.
-        function renderDisciplineCards() {
-            const grid = document.getElementById('discipline-cards-grid');
-            if (!grid) return;
-
-            const disciplines = getUniqueDisciplines();
-
-            if (disciplines.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-2 sm:col-span-3 lg:col-span-4 p-6 text-center rounded-2xl bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-400 font-medium">
-                        Cadastre questões (manual, JSON ou IA) para liberar simulados focados por disciplina.
-                    </div>
-                `;
-                return;
-            }
-
-            grid.innerHTML = disciplines.map(({ discipline, count }) => `
-                <button onclick="startDisciplineQuiz('${discipline.replace(/'/g, "\\'")}')" class="text-left p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-indigo-500 dark:hover:border-indigo-500 transition shadow-sm hover:shadow-md group">
-                    <div class="flex items-center justify-between mb-2">
-                        <i data-lucide="graduation-cap" class="w-4 h-4 text-indigo-500"></i>
-                        <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-500">${count}</span>
-                    </div>
-                    <span class="block text-xs font-bold text-slate-700 dark:text-slate-200 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400">${discipline}</span>
+      } catch (_) {}
+
+      // Fallback local / demo
+      if (list.length === 0) {
+        const localForTrack = state.questions.filter(q => !q.track || q.track === track.id);
+        list = localForTrack.length > 0 ? localForTrack : SAMPLE_QUESTIONS;
+      }
+
+      state.questions = list;
+      populateDisciplineFilter(list);
+      applyQuestionFilters();
+    }
+
+    function populateDisciplineFilter(list) {
+      const sel = document.getElementById('filterDiscipline');
+      const discs = Array.from(new Set(list.map(q => (q.discipline || 'GERAL').trim()).filter(Boolean)));
+      sel.innerHTML = `<option value="ALL">Todas as Disciplinas (${list.length})</option>` +
+        discs.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+    }
+
+    function applyQuestionFilters() {
+      const disc = document.getElementById('filterDiscipline').value;
+      state.filteredQuestions = disc === 'ALL'
+        ? state.questions
+        : state.questions.filter(q => (q.discipline || 'GERAL') === disc);
+      renderQuestions();
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questionsContainer');
+      const counterEl = document.getElementById('usageCounter');
+      const trackId = state.activeTrack ? state.activeTrack.id : 'GERAL';
+      const unlocked = hasFullAccessToTrack(trackId);
+      const usedFree = getFreeUsedCount(trackId);
+
+      if (unlocked) {
+        counterEl.textContent = `Acesso Liberado • ${state.filteredQuestions.length} questões`;
+      } else {
+        counterEl.textContent = `Degustação: ${Math.min(usedFree, FREE_QUESTION_LIMIT)}/${FREE_QUESTION_LIMIT} grátis usadas`;
+      }
+
+      container.innerHTML = '';
+      if (!state.filteredQuestions.length) {
+        container.innerHTML = `<div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-sm text-slate-400">Nenhuma questão encontrada para este filtro ainda.</div>`;
+        return;
+      }
+
+      state.filteredQuestions.forEach((q, idx) => {
+        const isLockedByFreemium = !unlocked && idx >= FREE_QUESTION_LIMIT;
+        const card = document.createElement('div');
+        card.className = 'relative bg-slate-900/95 border border-slate-800 rounded-2xl p-6 overflow-hidden space-y-4';
+
+        if (isLockedByFreemium) {
+          card.innerHTML = `
+            <div class="watermark-layer">${Array(12).fill('<div class="watermark-item">PREPSIMULADOS</div>').join('')}</div>
+            <div class="relative z-10 py-6 text-center space-y-3">
+              <div class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                Limite de ${FREE_QUESTION_LIMIT} questões gratuitas atingido
+              </div>
+              <h4 class="text-lg font-extrabold text-white">Continue resolvendo na trilha ${escapeHtml(state.activeTrack.name)}</h4>
+              <p class="text-xs text-slate-400 max-w-md mx-auto">
+                Assine o plano semestral (6 meses) ou anual (12 meses) para desbloquear todas as questões, gabaritos comentados e fundamentação legal.
+              </p>
+              <div class="flex justify-center gap-3 pt-2 flex-wrap">
+                <button onclick="openPlansForTrack('${escapeHtml(trackId)}')"
+                  class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">
+                  Ver Planos (6m / 12m)
                 </button>
-            `).join('');
-
-            lucide.createIcons();
+                <button onclick="openStudentModal()"
+                  class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white">
+                  Já sou Aluno
+                </button>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+          return;
         }
 
-        // Inicia um simulado filtrado por UMA disciplina específica (em vez de por carreira/simulado inteiro).
-        async function startDisciplineQuiz(disciplineName) {
-            const target = (disciplineName || '').trim();
-            const cloudSample = await fetchCloudSample(10, target, null);
+        const options = Array.isArray(q.options) && q.options.length ? q.options : ['CERTO', 'ERRADO'];
+        const optionsHtml = options.map((opt, oIdx) => `
+          <button onclick="answerQuestion('${escapeHtml(trackId)}', '${escapeHtml(q.id || idx)}', ${oIdx}, ${Number(q.correctAnswerIndex || 0)})"
+            id="opt_${q.id || idx}_${oIdx}"
+            class="w-full text-left px-4 py-3 rounded-xl border border-slate-800 bg-slate-950/80 hover:border-slate-600 text-xs sm:text-sm text-slate-200 transition">
+            ${escapeHtml(String(opt))}
+          </button>
+        `).join('');
 
-            if (cloudSample && cloudSample.length > 0) {
-                appState.activeQuizList = cloudSample;
-            } else {
-                const targetUpper = target.toUpperCase();
-                appState.activeQuizList = appState.questionBank.filter(q => (q.discipline || '').trim().toUpperCase() === targetUpper);
-            }
+        card.innerHTML = `
+          <div class="watermark-layer">${Array(12).fill('<div class="watermark-item">PREPSIMULADOS</div>').join('')}</div>
+          <div class="relative z-10 space-y-4 protected-content">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-slate-800 text-emerald-300">${escapeHtml(q.discipline || 'GERAL')}</span>
+                <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-slate-800/70 text-slate-300">${escapeHtml(q.role || '')}</span>
+              </div>
+              <span class="text-xs font-bold text-slate-500">#${idx + 1}</span>
+            </div>
 
-            if (appState.activeQuizList.length === 0) {
-                alertToast('Nenhuma questão encontrada para esta disciplina.');
-                return;
-            }
+            <p class="text-sm sm:text-base text-white leading-relaxed font-medium">${escapeHtml(q.statement || '')}</p>
 
-            appState.currentQuizIndex = 0;
-            navigateTo('quiz');
-            renderCurrentQuizQuestion();
+            <div class="space-y-2">${optionsHtml}</div>
+
+            <div id="fb_${q.id || idx}" class="hidden p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+              <div id="fbStatus_${q.id || idx}" class="font-bold"></div>
+              ${q.lawArticles ? `<p class="text-amber-300 font-semibold">Fundamentação: ${escapeHtml(q.lawArticles)}</p>` : ''}
+              ${q.explanation ? `<p class="text-slate-300 leading-relaxed">${escapeHtml(q.explanation)}</p>` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function answerQuestion(trackId, qId, chosenIdx, correctIdx) {
+      const unlocked = hasFullAccessToTrack(trackId);
+      if (!unlocked) {
+        const answeredSet = JSON.parse(localStorage.getItem(`ps_answered_${trackId}`) || '[]');
+        if (!answeredSet.includes(String(qId))) {
+          const used = incrementFreeUsedCount(trackId);
+          answeredSet.push(String(qId));
+          localStorage.setItem(`ps_answered_${trackId}`, JSON.stringify(answeredSet));
+          if (used >= FREE_QUESTION_LIMIT) {
+            showToast('Você usou suas 5 questões grátis nesta trilha!');
+            setTimeout(() => openPlansForTrack(trackId), 650);
+          }
         }
+      }
 
-        // ELABORADOR IA PRO
-        function generateQuestionsWithAI() {
-            const sourceText = document.getElementById('ai-source-text').value.trim();
-            const topic = document.getElementById('ai-topic-input').value.trim();
-            const role = document.getElementById('ai-role-select').value;
-            const count = parseInt(document.getElementById('ai-count-select').value);
-            const style = document.getElementById('ai-style-select').value;
+      const fb = document.getElementById(`fb_${qId}`);
+      const fbStatus = document.getElementById(`fbStatus_${qId}`);
+      const isRight = Number(chosenIdx) === Number(correctIdx);
 
-            if (!sourceText && !topic) {
-                alertToast('Cole o texto base (lei/PDF/doutrina) ou informe o assunto!');
-                return;
-            }
+      fb.classList.remove('hidden');
+      fbStatus.textContent = isRight ? '✅ Resposta correta!' : '❌ Resposta incorreta — confira o comentário abaixo.';
+      fbStatus.className = isRight ? 'font-bold text-emerald-400' : 'font-bold text-rose-400';
 
-            const btn = document.getElementById('btn-generate-ai');
-            const loading = document.getElementById('ai-loading-box');
-            const results = document.getElementById('ai-results-container');
-            
-            btn.classList.add('opacity-50', 'pointer-events-none');
-            loading.classList.remove('hidden');
-            results.innerHTML = '';
-            
-            setTimeout(async () => {
-                btn.classList.remove('opacity-50', 'pointer-events-none');
-                loading.classList.add('hidden');
+      const chosenBtn = document.getElementById(`opt_${qId}_${chosenIdx}`);
+      if (chosenBtn) {
+        chosenBtn.classList.add(isRight ? 'border-emerald-500' : 'border-rose-500', isRight ? 'bg-emerald-950/40' : 'bg-rose-950/40');
+      }
+    }
 
-                const generatedList = [];
-                const snippet = sourceText ? sourceText.substring(0, 180) + '...' : `Estudo focado em ${topic}`;
+    function goHome() {
+      document.getElementById('quizView').classList.add('hidden');
+      document.getElementById('tracksView').classList.remove('hidden');
+      renderTracksGrid();
+    }
 
-                for (let i = 0; i < count; i++) {
-                    const id = 'ai_pro_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substring(2, 6);
-                    let qObj = {};
+    // ==================== ATIVAÇÃO DE ALUNO + ANTI-RATEIO ====================
+    function openStudentModal() {
+      document.getElementById('studentAuthMsg').classList.add('hidden');
+      openModal('studentModal');
+    }
 
-                    if (style.includes('Cebraspe')) {
-                        qObj = {
-                            id,
-                            discipline: (topic || 'DIREITO APLICADO').toUpperCase(),
-                            role,
-                            statement: `Com base no texto base fornecido (${snippet}), julgue o item subsequente [Item ${i + 1}]: A aplicação da norma em tela admite exegese extensiva para abranger hipóteses não previstas expressamente pelo legislador, desde que demonstrado prejuízo à ordem pública.`,
-                            options: [
-                                'CERTO - A banca adota interpretação finalística conforme o texto base.',
-                                'ERRADO - A literalidade e o princípio da estrita legalidade vedam interpretação extensiva prejudicial no caso em tela.'
-                            ],
-                            correctAnswerIndex: i % 2 === 0 ? 1 : 0,
-                            explanation: `Análise técnica de banca Cebraspe elaborada a partir do material fornecido:\n\n"${sourceText ? sourceText.substring(0, 250) : topic}"\n\nA questão exige atenção à pegadinha clássica de extrapolação de texto legal. O examinador altera pequenas premissas para induzir o candidato ao erro.`,
-                            lawArticles: sourceText ? 'Extraído do Texto Base Fornecido' : 'Jurisprudência STF/STJ',
-                            source: 'Elaborador IA Pro'
-                        };
-                    } else {
-                        qObj = {
-                            id,
-                            discipline: (topic || 'DIREITO APLICADO').toUpperCase(),
-                            role,
-                            statement: `Durante a análise do caso prático #${i + 1} envolvendo ${topic}, considerando rigorosamente as diretrizes extraídas da lei e doutrina (${snippet}), assinale a alternativa correta:`,
-                            options: [
-                                'A) O ato administrativo ou procedimento em questão é plenamente discricionário, cabendo revogação a qualquer tempo pela autoridade competente.',
-                                'B) Há vinculação estrita aos ditames legais, sendo vedada qualquer margem de liberdade para a autoridade julgadora.',
-                                'C) O instituto opera efeitos ex nunc, ressalvada a hipótese de comprovada má-fé do administrado.',
-                                'D) A competência é improrrogável e irrenunciável, salvo autorização expressa em regulamento autônomo.',
-                                'E) Nenhuma das alternativas anteriores reflete o entendimento correto da banca.'
-                            ],
-                            correctAnswerIndex: 1,
-                            explanation: `Gabarito Comentado (Estilo FGV / Caso Concreto):\n\nA alternativa B está correta pois reflete o bloco normativo fornecido no estudo de caso.`,
-                            lawArticles: sourceText ? 'Fundamentação do texto base' : 'Legislação de Regência',
-                            source: 'Elaborador IA Pro'
-                        };
-                    }
-                    generatedList.push(qObj);
-                }
+    async function handleStudentLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('stuEmail').value.trim();
+      const cpf = document.getElementById('stuCpf').value.trim();
+      const msgEl = document.getElementById('studentAuthMsg');
+      const btn = document.getElementById('btnActivateStudent');
 
-                const updatedBank = deduplicateQuestionsArray([...generatedList, ...appState.questionBank]);
-                await saveQuestionsToStorage(updatedBank);
+      if (!email && !cpf) {
+        msgEl.textContent = 'Preencha seu e-mail ou CPF.';
+        msgEl.classList.remove('hidden');
+        return;
+      }
 
-                results.innerHTML = `
-                    <div class="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 text-center space-y-3">
-                        <i data-lucide="check-circle" class="w-12 h-12 text-emerald-500 mx-auto"></i>
-                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">${generatedList.length} Questão(ões) Gerada(s) e Salva(s)!</h3>
-                        <p class="text-sm text-slate-600 dark:text-slate-300">As questões já estão no seu Banco de Questões e alimentaram automaticamente o Glossário!</p>
-                        <div class="flex justify-center gap-3 pt-2">
-                            <button onclick="navigateTo('bank')" class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 transition">Ver no Banco</button>
-                            <button onclick="startQuickQuiz('ALL')" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition">Fazer Simulado</button>
-                        </div>
-                    </div>
-                `;
-                lucide.createIcons();
+      btn.disabled = true;
+      btn.textContent = 'Validando...';
+      msgEl.classList.add('hidden');
 
-                renderBankList();
-                renderGlossary();
-                updateStatsUI();
-                alertToast('Questões geradas e salvas no navegador com sucesso!');
+      try {
+        const url = `${SCRIPT_URL}?action=validate&email=${encodeURIComponent(email)}&cpf=${encodeURIComponent(cpf)}&deviceId=${encodeURIComponent(state.deviceId)}&_=${Date.now()}`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-            }, 2000);
+        if (data && data.allowed) {
+          state.studentSession = {
+            allowed: true,
+            track: data.track || 'PASSAPORTE_ELITE',
+            expiresAt: data.expiresAt || '',
+            email
+          };
+          localStorage.setItem('ps_student_session', JSON.stringify(state.studentSession));
+          updateStudentUI();
+          closeModal('studentModal');
+          showToast(`Acesso liberado (${state.studentSession.track})!`);
+          if (!document.getElementById('quizView').classList.contains('hidden')) {
+            renderQuestions();
+          }
+        } else {
+          msgEl.textContent = (data && data.reason) || 'Não foi possível validar seu acesso.';
+          msgEl.classList.remove('hidden');
         }
+      } catch (_) {
+        msgEl.textContent = 'Erro de conexão com o servidor. Tente novamente em instantes.';
+        msgEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Validar e Liberar Questões';
+      }
+    }
 
-        function alertToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 z-[60] bg-slate-900 dark:bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-10 opacity-0';
-            toast.innerHTML = `
-                <i data-lucide="info" class="w-5 h-5 text-blue-400"></i>
-                <span class="text-sm font-bold">${message}</span>
-            `;
-            document.body.appendChild(toast);
-            lucide.createIcons();
-            
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    toast.classList.remove('translate-y-10', 'opacity-0');
-                });
-            });
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+    // ==================== FUNÇÕES DO PAINEL ADMIN ====================
+    function toggleAdminPanel() {
+      if (!state.isAdmin) return;
+      document.getElementById('adminSection').classList.toggle('hidden');
+    }
+
+    function switchAdminTab(tab) {
+      ['tracks', 'questions', 'students'].forEach(t => {
+        document.getElementById(`adminTab${capitalize(t)}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tabAdmin${capitalize(t)}`);
+        btn.className = t === tab
+          ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950'
+          : 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700';
+      });
+    }
+
+    function populateTrackSelects() {
+      const sel = document.getElementById('qTrack');
+      sel.innerHTML = state.tracks
+        .filter(t => t.id !== 'PASSAPORTE_ELITE')
+        .map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${escapeHtml(t.id)})</option>`)
+        .join('');
+    }
+
+    function renderAdminTracks() {
+      const box = document.getElementById('adminTracksList');
+      if (!box) return;
+      box.innerHTML = state.tracks.map(t => `
+        <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-xs text-white">${escapeHtml(t.name)}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${escapeHtml(t.id)}</span>
+              ${t.statusBadge ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300">${escapeHtml(t.statusBadge)}</span>` : ''}
+            </div>
+            <p class="text-[11px] text-emerald-300">Destaques: ${(t.highlights || []).join(', ') || '—'}</p>
+            <p class="text-[11px] text-slate-400">6m: ${escapeHtml(t.checkout6m || '#')} • 12m: ${escapeHtml(t.checkout12m || '#')}</p>
+          </div>
+          <button onclick='editTrackInForm(${JSON.stringify(t.id)})'
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-300 shrink-0">
+            Editar
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function editTrackInForm(trackId) {
+      const t = state.tracks.find(item => item.id === trackId);
+      if (!t) return;
+      document.getElementById('trkId').value = t.id;
+      document.getElementById('trkName').value = t.name;
+      document.getElementById('trkHighlights').value = (t.highlights || []).join(', ');
+      document.getElementById('trkBadge').value = t.statusBadge || '';
+      document.getElementById('trkOtherRoles').value = t.otherRoles || '';
+      document.getElementById('trkDesc').value = t.description || '';
+      document.getElementById('trkYampi6').value = t.checkout6m || '';
+      document.getElementById('trkYampi12').value = t.checkout12m || '';
+      switchAdminTab('tracks');
+      showToast(`Editando "${t.name}"`);
+    }
+
+    function clearTrackForm() {
+      ['trkId', 'trkName', 'trkHighlights', 'trkBadge', 'trkOtherRoles', 'trkDesc', 'trkYampi6', 'trkYampi12']
+        .forEach(id => { document.getElementById(id).value = ''; });
+    }
+
+    async function handleSaveTrack(e) {
+      e.preventDefault();
+      const trackObj = {
+        id: document.getElementById('trkId').value.trim(),
+        name: document.getElementById('trkName').value.trim(),
+        highlights: document.getElementById('trkHighlights').value.trim(),
+        statusBadge: document.getElementById('trkBadge').value.trim(),
+        otherRoles: document.getElementById('trkOtherRoles').value.trim(),
+        description: document.getElementById('trkDesc').value.trim(),
+        checkout6m: document.getElementById('trkYampi6').value.trim() || '#',
+        checkout12m: document.getElementById('trkYampi12').value.trim() || '#'
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'save_track', track: trackObj })
+        });
+        const data = await res.json();
+        if (data && data.success && data.track) {
+          const idx = state.tracks.findIndex(x => x.id === data.track.id);
+          if (idx >= 0) state.tracks[idx] = data.track;
+          else state.tracks.push(data.track);
+          renderTracksGrid();
+          renderAdminTracks();
+          populateTrackSelects();
+          clearTrackForm();
+          showToast('Trilha salva na planilha com sucesso!');
+        } else {
+          showToast('Falha ao salvar trilha na planilha.', true);
         }
-    </script>
+      } catch (_) {
+        showToast('Erro de rede ao salvar trilha.', true);
+      }
+    }
+
+    async function handleCreateQuestion(e) {
+      e.preventDefault();
+      const track = document.getElementById('qTrack').value;
+      const options = document.getElementById('qOptions').value
+        .split('\n').map(s => s.trim()).filter(Boolean);
+
+      const q = {
+        id: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        track,
+        discipline: document.getElementById('qDiscipline').value.trim().toUpperCase(),
+        role: document.getElementById('qRole').value.trim(),
+        statement: document.getElementById('qStatement').value.trim(),
+        options: options.length ? options : ['CERTO', 'ERRADO'],
+        correctAnswerIndex: Number(document.getElementById('qCorrectIdx').value || 0),
+        lawArticles: document.getElementById('qLaw').value.trim(),
+        explanation: document.getElementById('qExplanation').value.trim(),
+        source: 'Admin Manual',
+        createdAt: new Date().toISOString()
+      };
+
+      state.questions.unshift(q);
+      localStorage.setItem('ps_local_questions', JSON.stringify(state.questions));
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ track, questions: [q] })
+        });
+        showToast('Questão salva e enviada para a planilha!');
+      } catch (_) {
+        showToast('Salva localmente; use "Sincronizar" para enviar à planilha.', true);
+      }
+
+      document.getElementById('qStatement').value = '';
+      document.getElementById('qExplanation').value = '';
+    }
+
+    function handleImportJson() {
+      const raw = document.getElementById('jsonImportArea').value.trim();
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        const track = document.getElementById('qTrack').value;
+        const normalized = arr.filter(x => x && x.statement).map(x => ({
+          id: x.id || ('imp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+          track: x.track || track,
+          discipline: String(x.discipline || 'GERAL').toUpperCase(),
+          role: String(x.role || track),
+          statement: String(x.statement),
+          options: Array.isArray(x.options) ? x.options : ['CERTO', 'ERRADO'],
+          correctAnswerIndex: Number(x.correctAnswerIndex || 0),
+          explanation: String(x.explanation || ''),
+          lawArticles: String(x.lawArticles || ''),
+          source: String(x.source || 'JSON Import'),
+          createdAt: x.createdAt || new Date().toISOString()
+        }));
+        state.questions.unshift(...normalized);
+        localStorage.setItem('ps_local_questions', JSON.stringify(state.questions));
+        showToast(`${normalized.length} questão(ões) importada(s)! Clique em Sincronizar para enviar à planilha.`);
+      } catch (_) {
+        showToast('JSON inválido. Verifique a sintaxe.', true);
+      }
+    }
+
+    function handleExportJson() {
+      document.getElementById('jsonImportArea').value = JSON.stringify(state.questions, null, 2);
+      showToast('JSON exportado para a caixa ao lado.');
+    }
+
+    async function syncAllQuestionsToSheet() {
+      if (!state.questions.length) {
+        showToast('Não há questões locais para sincronizar.', true);
+        return;
+      }
+      const btn = document.getElementById('btnSyncCloud');
+      btn.disabled = true;
+      btn.textContent = 'Sincronizando...';
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ questions: state.questions })
+        });
+        const data = await res.json();
+        showToast(`Sincronização concluída! Novas na planilha: ${data.count ?? data.inserted ?? 0}`);
+      } catch (_) {
+        showToast('Erro ao sincronizar com a planilha.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '☁️ Sincronizar Questões Locais com Planilha';
+      }
+    }
+
+    async function handleResetDevice() {
+      const email = document.getElementById('resetEmail').value.trim();
+      const cpf = document.getElementById('resetCpf').value.trim();
+      if (!email && !cpf) {
+        showToast('Informe o e-mail ou CPF do aluno.', true);
+        return;
+      }
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'reset_device', email, cpf })
+        });
+        const data = await res.json();
+        showToast(data && data.success ? 'Dispositivo resetado com sucesso!' : 'Aluno não encontrado na aba ALUNOS_LIBERADOS.', !(data && data.success));
+      } catch (_) {
+        showToast('Erro de rede ao resetar dispositivo.', true);
+      }
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
 </body>
 </html>
