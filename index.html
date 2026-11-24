@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PrepSimulados — Banco de Questões & Simulados</title>
+  <title>PrepSimulados — Banco de Questões & Painel do Aluno</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -14,7 +14,6 @@
       color: #e2e8f0;
     }
 
-    /* Proteção anti-cópia em áreas de conteúdo (mantém inputs/textareas livres) */
     .protected-content {
       user-select: none;
       -webkit-user-select: none;
@@ -24,7 +23,6 @@
       -webkit-user-select: text !important;
     }
 
-    /* Marca d'água discreta para prints */
     .watermark-layer {
       pointer-events: none;
       position: absolute;
@@ -58,7 +56,7 @@
           PS
         </div>
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="font-extrabold text-white tracking-tight text-lg">PrepSimulados</span>
             <span id="studentBadge" class="hidden text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"></span>
             <span id="adminBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
@@ -70,6 +68,10 @@
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="openCrmView()" id="btnOpenCrm"
+          class="px-3.5 py-2 rounded-lg text-xs font-bold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 transition">
+          📊 Meu Desempenho
+        </button>
         <button onclick="openStudentModal()" id="btnStudentAccess"
           class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition">
           Já sou Aluno / Ativar
@@ -86,13 +88,13 @@
     </div>
   </header>
 
-  <!-- PAINEL ADMIN (SÓ APARECE QUANDO ?admin=CBMSD=@2025 ESTÁ NA URL) -->
+  <!-- PAINEL ADMIN (?admin=CBMSD=@2025) -->
   <section id="adminSection" class="hidden bg-amber-950/25 border-b border-amber-500/30">
     <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 class="text-xl font-bold text-amber-300">⚙️ Central Administrativa — PrepSimulados</h2>
-          <p class="text-xs text-slate-400">Gerencie trilhas, múltiplos destaques, links da Yampi, reset de dispositivos e questões sem abrir a planilha.</p>
+          <p class="text-xs text-slate-400">Gerencie trilhas, múltiplos destaques, links da Yampi, reset de dispositivos e questões.</p>
         </div>
         <button onclick="syncAllQuestionsToSheet()" id="btnSyncCloud"
           class="px-4 py-2 rounded-lg text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition">
@@ -100,7 +102,6 @@
         </button>
       </div>
 
-      <!-- Abas internas do Admin -->
       <div class="flex gap-2 border-b border-slate-800 pb-3 flex-wrap">
         <button onclick="switchAdminTab('tracks')" id="tabAdminTracks"
           class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">
@@ -116,11 +117,11 @@
         </button>
       </div>
 
-      <!-- ADMIN TAB 1: TRILHAS & DESTAQUES -->
+      <!-- ADMIN TAB 1: TRILHAS -->
       <div id="adminTabTracks" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <form onsubmit="handleSaveTrack(event)" class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
           <h3 class="font-bold text-white text-sm">Criar ou Editar Trilha</h3>
-          <p class="text-[11px] text-slate-400">Dica: separe múltiplos cargos em destaque por vírgula (ex: <code class="text-emerald-300">CFO PM, CFO Bombeiros</code>).</p>
+          <p class="text-[11px] text-slate-400">Separe múltiplos cargos em destaque por vírgula (ex: <code class="text-emerald-300">CFO PM, CFO Bombeiros</code>).</p>
 
           <div>
             <label class="block text-xs text-slate-400 mb-1">ID da Trilha (opcional ao criar; obrigatório para editar)</label>
@@ -190,7 +191,7 @@
         </div>
       </div>
 
-      <!-- ADMIN TAB 2: CRIAR / IMPORTAR QUESTÕES -->
+      <!-- ADMIN TAB 2: QUESTÕES -->
       <div id="adminTabQuestions" class="hidden grid-cols-1 lg:grid-cols-2 gap-6">
         <form onsubmit="handleCreateQuestion(event)" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
           <h3 class="font-bold text-white text-sm">Adicionar Questão Manual</h3>
@@ -220,7 +221,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs text-slate-400 mb-1">Alternativas (uma por linha)</label>
-              <textarea id="qOptions" rows="3" placeholder="CERTO&#10;ERRADO"
+              <textarea id="qOptions" rows="3"
                 class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">CERTO
 ERRADO</textarea>
             </div>
@@ -251,7 +252,7 @@ ERRADO</textarea>
 
         <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
           <h3 class="font-bold text-white text-sm">Importar / Exportar JSON</h3>
-          <textarea id="jsonImportArea" rows="9" placeholder='Cole aqui um array JSON de questões, ex: [{"discipline":"DIREITO PENAL","role":"PCDF","statement":"...","options":["CERTO","ERRADO"],"correctAnswerIndex":0,"explanation":"..."}]'
+          <textarea id="jsonImportArea" rows="9" placeholder='Cole aqui um array JSON de questões...'
             class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white font-mono"></textarea>
           <div class="flex gap-2 flex-wrap">
             <button onclick="handleImportJson()" class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950">
@@ -267,11 +268,11 @@ ERRADO</textarea>
       <!-- ADMIN TAB 3: RESET DE DISPOSITIVO -->
       <div id="adminTabStudents" class="hidden max-w-xl bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
         <h3 class="font-bold text-white text-sm">Resetar Dispositivo Vinculado (Anti-Rateio)</h3>
-        <p class="text-xs text-slate-400">Quando um aluno trocar de celular/computador e bloquear no <code class="text-amber-300">Device_ID</code>, informe o e-mail ou CPF dele aqui para liberar um novo aparelho.</p>
+        <p class="text-xs text-slate-400">Informe o e-mail ou CPF do aluno para liberar um novo aparelho.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input id="resetEmail" type="email" placeholder="E-mail do aluno"
             class="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
-          <input id="resetCpf" type="text" placeholder="CPF (apenas números ou formatado)"
+          <input id="resetCpf" type="text" placeholder="CPF"
             class="px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
         </div>
         <button onclick="handleResetDevice()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950">
@@ -295,7 +296,7 @@ ERRADO</textarea>
             Escolha sua trilha de preparação
           </h1>
           <p class="text-sm text-slate-400 mt-1">
-            Teste gratuitamente com <strong class="text-slate-200">5 questões por trilha</strong>. Libere acesso completo semestral (6m) ou anual (12m).
+            Teste gratuitamente com <strong class="text-slate-200">5 questões por trilha</strong> e acompanhe sua evolução no painel individual.
           </p>
         </div>
         <div id="tracksStatusText" class="text-xs text-slate-400">Carregando trilhas...</div>
@@ -328,9 +329,126 @@ ERRADO</textarea>
 
       <div id="questionsContainer" class="space-y-5"></div>
     </section>
+
+    <!-- VIEW 3: CRM DE DESEMPENHO INDIVIDUAL DO ALUNO -->
+    <section id="crmView" class="hidden space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 rounded-2xl p-5">
+        <div class="flex items-center gap-3">
+          <button onclick="goHome()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200">
+            ← Voltar
+          </button>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="font-extrabold text-white text-lg">📊 Meu Painel de Desempenho & Estudos</h2>
+              <span id="crmSyncStatus" class="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                Modo Local (Visitante)
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Acompanhe suas questões resolvidas, taxa de acerto por matéria e registre suas horas de estudo.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="syncStudentCrmNow()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+            🔄 Atualizar Dados
+          </button>
+        </div>
+      </div>
+
+      <!-- KPIs DO ALUNO -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+          <span class="text-xs text-slate-400">Questões Resolvidas</span>
+          <div id="kpiTotalQuestions" class="text-2xl font-extrabold text-white mt-1">0</div>
+          <span id="kpiHitsMisses" class="text-[11px] text-slate-400">0 acertos • 0 erros</span>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+          <span class="text-xs text-slate-400">Taxa de Acerto</span>
+          <div id="kpiAccuracy" class="text-2xl font-extrabold text-emerald-400 mt-1">0%</div>
+          <span class="text-[11px] text-slate-400">Meta recomendada: ≥ 80%</span>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+          <span class="text-xs text-slate-400">Tempo Estudado</span>
+          <div id="kpiStudyTime" class="text-2xl font-extrabold text-indigo-400 mt-1">0h 00m</div>
+          <span id="kpiSessionsCount" class="text-[11px] text-slate-400">0 sessões registradas</span>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+          <span class="text-xs text-slate-400">Disciplina Destaque</span>
+          <div id="kpiBestDiscipline" class="text-base font-extrabold text-amber-300 mt-1 truncate">—</div>
+          <span id="kpiBestAcc" class="text-[11px] text-slate-400">Resolva questões para calcular</span>
+        </div>
+      </div>
+
+      <!-- CRONÔMETRO & REGISTRO DE ESTUDO + DESEMPENHO POR DISCIPLINA -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Registrar Sessão / Cronômetro -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <h3 class="font-bold text-white text-sm">⏱️ Registrar Sessão de Estudo</h3>
+
+          <!-- Cronômetro simples -->
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-[11px] text-slate-400 uppercase font-semibold">Cronômetro</div>
+              <div id="timerDisplay" class="text-2xl font-mono font-extrabold text-emerald-400">00:00:00</div>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" onclick="toggleStudyTimer()" id="btnTimerToggle"
+                class="px-3 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">
+                Iniciar
+              </button>
+              <button type="button" onclick="applyTimerToInput()"
+                class="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200">
+                Usar
+              </button>
+            </div>
+          </div>
+
+          <form onsubmit="handleLogStudySession(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Disciplina Estudada *</label>
+              <input id="crmStudyDiscipline" type="text" required placeholder="Ex: DIREITO CONSTITUCIONAL"
+                class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Minutos *</label>
+                <input id="crmStudyMinutes" type="number" min="1" max="720" required placeholder="Ex: 50"
+                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Data</label>
+                <input id="crmStudyDate" type="date"
+                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+              </div>
+            </div>
+            <button type="submit"
+              class="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white transition">
+              + Salvar Sessão no Meu Histórico
+            </button>
+          </form>
+        </div>
+
+        <!-- Desempenho por Disciplina -->
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white text-sm">📚 Desempenho por Disciplina</h3>
+            <span class="text-[11px] text-slate-400">Questões + Tempo</span>
+          </div>
+          <div id="crmDisciplineList" class="space-y-3 max-h-[340px] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO RECENTE -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+        <h3 class="font-bold text-white text-sm">🕒 Atividades Recentes</h3>
+        <div id="crmRecentList" class="space-y-2 max-h-[260px] overflow-y-auto pr-1 text-xs"></div>
+      </div>
+    </section>
   </main>
 
-  <!-- MODAL: PLANOS (6M / 12M / PASSAPORTE ELITE) -->
+  <!-- MODAL: PLANOS (6M / 12M) -->
   <div id="plansModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 space-y-5 relative">
       <button onclick="closeModal('plansModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
@@ -386,7 +504,7 @@ ERRADO</textarea>
       <div>
         <h3 class="text-lg font-extrabold text-white">Ativar Acesso do Aluno</h3>
         <p class="text-xs text-slate-400 mt-1">
-          Informe o e-mail ou CPF usado na compra. Seu acesso será vinculado a este dispositivo (<code id="currentDeviceLabel" class="text-emerald-300"></code>).
+          Informe o e-mail ou CPF usado na compra. Seu acesso e seu painel de desempenho serão vinculados a este dispositivo (<code id="currentDeviceLabel" class="text-emerald-300"></code>).
         </p>
       </div>
 
@@ -415,7 +533,7 @@ ERRADO</textarea>
 
   <script>
     // ==================== CONFIGURAÇÃO PRINCIPAL ====================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1qmBnITdxO-3JU8RA75FJzE5tud-QhG0ZdVv1Z5Jl38IIJHNYZ7A_ZuEwRk3QSqRsLg/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwL9X7sXVL5oDNxxdutQNNDzgBuCsENK_RWc0uAF9D3oe_kCNPtX2qTbAmhsroGAlczRA/exec';
     const ADMIN_SECRET = 'CBMSD=@2025';
     const FREE_QUESTION_LIMIT = 5;
 
@@ -509,7 +627,11 @@ ERRADO</textarea>
       questions: [],
       filteredQuestions: [],
       studentSession: null,
-      deviceId: getOrCreateDeviceId()
+      deviceId: getOrCreateDeviceId(),
+      crmActivities: [],
+      timerSeconds: 0,
+      timerRunning: false,
+      timerInterval: null
     };
 
     function getOrCreateDeviceId() {
@@ -519,6 +641,12 @@ ERRADO</textarea>
         localStorage.setItem('ps_device_id', id);
       }
       return id;
+    }
+
+    function getStudentKey() {
+      const s = state.studentSession;
+      if (!s || !s.allowed) return '';
+      return (s.email || s.cpf || '').trim().toLowerCase();
     }
 
     function showToast(msg, isError = false) {
@@ -538,8 +666,8 @@ ERRADO</textarea>
     // ==================== INICIALIZAÇÃO ====================
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('currentDeviceLabel').textContent = state.deviceId;
+      document.getElementById('crmStudyDate').value = new Date().toISOString().slice(0, 10);
 
-      // Verifica senha do Admin na URL (?admin=CBMSD=@2025)
       const params = new URLSearchParams(window.location.search);
       if (params.get('admin') === ADMIN_SECRET) {
         state.isAdmin = true;
@@ -548,7 +676,6 @@ ERRADO</textarea>
         document.getElementById('adminSection').classList.remove('hidden');
       }
 
-      // Restaura sessão salva do aluno
       const savedSession = localStorage.getItem('ps_student_session');
       if (savedSession) {
         try {
@@ -557,23 +684,32 @@ ERRADO</textarea>
         } catch (_) {}
       }
 
-      // Carrega questões locais em cache
       const cachedQ = localStorage.getItem('ps_local_questions');
       if (cachedQ) {
         try { state.questions = JSON.parse(cachedQ); } catch (_) {}
       }
 
+      loadLocalCrmActivities();
       await loadTracksFromBackend();
       renderTracksGrid();
       renderAdminTracks();
       populateTrackSelects();
+
+      if (getStudentKey()) {
+        await syncStudentCrmFromCloud();
+      }
     });
 
     function updateStudentUI() {
       const badge = document.getElementById('studentBadge');
+      const crmSync = document.getElementById('crmSyncStatus');
       if (state.studentSession && state.studentSession.allowed) {
         badge.textContent = `ALUNO ATIVO • ${state.studentSession.track}`;
         badge.classList.remove('hidden');
+        if (crmSync) {
+          crmSync.textContent = `Sincronizado na Nuvem (${getStudentKey()})`;
+          crmSync.className = 'text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+        }
       } else {
         badge.classList.add('hidden');
       }
@@ -593,7 +729,7 @@ ERRADO</textarea>
       statusEl.textContent = `Exibindo trilhas base (${state.tracks.length})`;
     }
 
-    // ==================== VITRINE DE TRILHAS (SUPORTA MÚLTIPLOS DESTAQUES) ====================
+    // ==================== VITRINE DE TRILHAS ====================
     function renderTracksGrid() {
       const grid = document.getElementById('tracksGrid');
       grid.innerHTML = '';
@@ -695,21 +831,18 @@ ERRADO</textarea>
       state.activeTrack = track;
 
       document.getElementById('tracksView').classList.add('hidden');
+      document.getElementById('crmView').classList.add('hidden');
       document.getElementById('quizView').classList.remove('hidden');
       document.getElementById('activeTrackTitle').textContent = track.name;
       document.getElementById('activeTrackSub').textContent = (track.highlights || []).join(' • ');
 
-      // Busca questões da trilha na planilha
       let list = [];
       try {
         const res = await fetch(`${SCRIPT_URL}?action=list&track=${encodeURIComponent(track.id)}&_=${Date.now()}`);
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          list = data;
-        }
+        if (Array.isArray(data) && data.length > 0) list = data;
       } catch (_) {}
 
-      // Fallback local / demo
       if (list.length === 0) {
         const localForTrack = state.questions.filter(q => !q.track || q.track === track.id);
         list = localForTrack.length > 0 ? localForTrack : SAMPLE_QUESTIONS;
@@ -768,7 +901,7 @@ ERRADO</textarea>
               </div>
               <h4 class="text-lg font-extrabold text-white">Continue resolvendo na trilha ${escapeHtml(state.activeTrack.name)}</h4>
               <p class="text-xs text-slate-400 max-w-md mx-auto">
-                Assine o plano semestral (6 meses) ou anual (12 meses) para desbloquear todas as questões, gabaritos comentados e fundamentação legal.
+                Assine o plano semestral (6 meses) ou anual (12 meses) para desbloquear todas as questões, gabaritos comentados e seu painel de desempenho.
               </p>
               <div class="flex justify-center gap-3 pt-2 flex-wrap">
                 <button onclick="openPlansForTrack('${escapeHtml(trackId)}')"
@@ -786,10 +919,12 @@ ERRADO</textarea>
           return;
         }
 
+        const qKey = String(q.id || idx);
+        const disc = String(q.discipline || 'GERAL');
         const options = Array.isArray(q.options) && q.options.length ? q.options : ['CERTO', 'ERRADO'];
         const optionsHtml = options.map((opt, oIdx) => `
-          <button onclick="answerQuestion('${escapeHtml(trackId)}', '${escapeHtml(q.id || idx)}', ${oIdx}, ${Number(q.correctAnswerIndex || 0)})"
-            id="opt_${q.id || idx}_${oIdx}"
+          <button onclick='answerQuestion(${JSON.stringify(trackId)}, ${JSON.stringify(qKey)}, ${JSON.stringify(disc)}, ${oIdx}, ${Number(q.correctAnswerIndex || 0)})'
+            id="opt_${qKey}_${oIdx}"
             class="w-full text-left px-4 py-3 rounded-xl border border-slate-800 bg-slate-950/80 hover:border-slate-600 text-xs sm:text-sm text-slate-200 transition">
             ${escapeHtml(String(opt))}
           </button>
@@ -800,7 +935,7 @@ ERRADO</textarea>
           <div class="relative z-10 space-y-4 protected-content">
             <div class="flex items-center justify-between gap-2 flex-wrap">
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-slate-800 text-emerald-300">${escapeHtml(q.discipline || 'GERAL')}</span>
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-slate-800 text-emerald-300">${escapeHtml(disc)}</span>
                 <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-slate-800/70 text-slate-300">${escapeHtml(q.role || '')}</span>
               </div>
               <span class="text-xs font-bold text-slate-500">#${idx + 1}</span>
@@ -810,8 +945,8 @@ ERRADO</textarea>
 
             <div class="space-y-2">${optionsHtml}</div>
 
-            <div id="fb_${q.id || idx}" class="hidden p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
-              <div id="fbStatus_${q.id || idx}" class="font-bold"></div>
+            <div id="fb_${qKey}" class="hidden p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+              <div id="fbStatus_${qKey}" class="font-bold"></div>
               ${q.lawArticles ? `<p class="text-amber-300 font-semibold">Fundamentação: ${escapeHtml(q.lawArticles)}</p>` : ''}
               ${q.explanation ? `<p class="text-slate-300 leading-relaxed">${escapeHtml(q.explanation)}</p>` : ''}
             </div>
@@ -821,19 +956,34 @@ ERRADO</textarea>
       });
     }
 
-    function answerQuestion(trackId, qId, chosenIdx, correctIdx) {
+    function answerQuestion(trackId, qId, discipline, chosenIdx, correctIdx) {
       const unlocked = hasFullAccessToTrack(trackId);
-      if (!unlocked) {
-        const answeredSet = JSON.parse(localStorage.getItem(`ps_answered_${trackId}`) || '[]');
-        if (!answeredSet.includes(String(qId))) {
+      const answeredSet = JSON.parse(localStorage.getItem(`ps_answered_${trackId}`) || '[]');
+      const isFirstAttempt = !answeredSet.includes(String(qId));
+
+      if (isFirstAttempt) {
+        answeredSet.push(String(qId));
+        localStorage.setItem(`ps_answered_${trackId}`, JSON.stringify(answeredSet));
+
+        if (!unlocked) {
           const used = incrementFreeUsedCount(trackId);
-          answeredSet.push(String(qId));
-          localStorage.setItem(`ps_answered_${trackId}`, JSON.stringify(answeredSet));
           if (used >= FREE_QUESTION_LIMIT) {
             showToast('Você usou suas 5 questões grátis nesta trilha!');
             setTimeout(() => openPlansForTrack(trackId), 650);
           }
         }
+
+        // Registra no CRM de Desempenho Individual do Aluno
+        recordCrmActivity({
+          id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          track: trackId,
+          discipline: discipline || 'GERAL',
+          type: 'question',
+          isCorrect: Number(chosenIdx) === Number(correctIdx) ? 1 : 0,
+          minutes: 0,
+          date: new Date().toISOString().slice(0, 10),
+          timestamp: Date.now()
+        });
       }
 
       const fb = document.getElementById(`fb_${qId}`);
@@ -852,8 +1002,229 @@ ERRADO</textarea>
 
     function goHome() {
       document.getElementById('quizView').classList.add('hidden');
+      document.getElementById('crmView').classList.add('hidden');
       document.getElementById('tracksView').classList.remove('hidden');
       renderTracksGrid();
+    }
+
+    // ==================== CRM DE DESEMPENHO INDIVIDUAL DO ALUNO ====================
+    function openCrmView() {
+      document.getElementById('tracksView').classList.add('hidden');
+      document.getElementById('quizView').classList.add('hidden');
+      document.getElementById('crmView').classList.remove('hidden');
+      renderCrmDashboard();
+    }
+
+    function getCrmStorageKey() {
+      const key = getStudentKey();
+      return key ? `ps_crm_${key}` : 'ps_crm_guest';
+    }
+
+    function loadLocalCrmActivities() {
+      try {
+        state.crmActivities = JSON.parse(localStorage.getItem(getCrmStorageKey()) || '[]');
+      } catch (_) {
+        state.crmActivities = [];
+      }
+    }
+
+    function saveLocalCrmActivities() {
+      localStorage.setItem(getCrmStorageKey(), JSON.stringify(state.crmActivities));
+    }
+
+    async function recordCrmActivity(activity) {
+      state.crmActivities.unshift(activity);
+      saveLocalCrmActivities();
+
+      const key = getStudentKey();
+      if (key) {
+        try {
+          await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'student_activity',
+              studentKey: key,
+              item: activity
+            })
+          });
+        } catch (_) {}
+      }
+    }
+
+    async function syncStudentCrmFromCloud() {
+      const key = getStudentKey();
+      if (!key) return;
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=student_stats&studentKey=${encodeURIComponent(key)}&_=${Date.now()}`);
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.items)) {
+          const map = new Map();
+          state.crmActivities.forEach(it => map.set(it.id, it));
+          data.items.forEach(it => map.set(it.id, it));
+          state.crmActivities = Array.from(map.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          saveLocalCrmActivities();
+          renderCrmDashboard();
+        }
+      } catch (_) {}
+    }
+
+    async function syncStudentCrmNow() {
+      if (!getStudentKey()) {
+        renderCrmDashboard();
+        showToast('Painel local atualizado! Ative seu acesso de aluno para sincronizar na nuvem.');
+        return;
+      }
+      await syncStudentCrmFromCloud();
+      showToast('Desempenho sincronizado com sua conta!');
+    }
+
+    function toggleStudyTimer() {
+      const btn = document.getElementById('btnTimerToggle');
+      if (state.timerRunning) {
+        clearInterval(state.timerInterval);
+        state.timerRunning = false;
+        btn.textContent = 'Retomar';
+        btn.className = 'px-3 py-2 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950';
+      } else {
+        state.timerRunning = true;
+        btn.textContent = 'Pausar';
+        btn.className = 'px-3 py-2 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950';
+        state.timerInterval = setInterval(() => {
+          state.timerSeconds++;
+          updateTimerDisplay();
+        }, 1000);
+      }
+    }
+
+    function updateTimerDisplay() {
+      const h = String(Math.floor(state.timerSeconds / 3600)).padStart(2, '0');
+      const m = String(Math.floor((state.timerSeconds % 3600) / 60)).padStart(2, '0');
+      const s = String(state.timerSeconds % 60).padStart(2, '0');
+      document.getElementById('timerDisplay').textContent = `${h}:${m}:${s}`;
+    }
+
+    function applyTimerToInput() {
+      const mins = Math.max(1, Math.round(state.timerSeconds / 60));
+      document.getElementById('crmStudyMinutes').value = mins;
+      showToast(`${mins} minuto(s) transferidos para o formulário.`);
+    }
+
+    async function handleLogStudySession(e) {
+      e.preventDefault();
+      const discipline = document.getElementById('crmStudyDiscipline').value.trim().toUpperCase();
+      const minutes = Number(document.getElementById('crmStudyMinutes').value || 0);
+      const date = document.getElementById('crmStudyDate').value || new Date().toISOString().slice(0, 10);
+      if (!discipline || minutes <= 0) return;
+
+      await recordCrmActivity({
+        id: 'stu_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        track: (state.studentSession && state.studentSession.track) || 'GERAL',
+        discipline,
+        type: 'study',
+        isCorrect: 0,
+        minutes,
+        date,
+        timestamp: Date.now()
+      });
+
+      if (state.timerRunning) toggleStudyTimer();
+      state.timerSeconds = 0;
+      updateTimerDisplay();
+      document.getElementById('crmStudyMinutes').value = '';
+      renderCrmDashboard();
+      showToast(`Sessão de ${minutes} min em ${discipline} registrada!`);
+    }
+
+    function renderCrmDashboard() {
+      const list = state.crmActivities;
+      const questions = list.filter(x => x.type === 'question');
+      const studies = list.filter(x => x.type === 'study');
+
+      const totalQ = questions.length;
+      const hits = questions.filter(x => Number(x.isCorrect) === 1).length;
+      const misses = totalQ - hits;
+      const acc = totalQ > 0 ? Math.round((hits / totalQ) * 100) : 0;
+
+      const totalMins = studies.reduce((sum, s) => sum + Number(s.minutes || 0), 0);
+      const hours = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+
+      document.getElementById('kpiTotalQuestions').textContent = totalQ;
+      document.getElementById('kpiHitsMisses').textContent = `${hits} acertos • ${misses} erros`;
+      document.getElementById('kpiAccuracy').textContent = `${acc}%`;
+      document.getElementById('kpiStudyTime').textContent = `${hours}h ${String(mins).padStart(2, '0')}m`;
+      document.getElementById('kpiSessionsCount').textContent = `${studies.length} sessões registradas`;
+
+      // Agrupar por disciplina
+      const byDisc = {};
+      list.forEach(item => {
+        const d = (item.discipline || 'GERAL').toUpperCase();
+        if (!byDisc[d]) byDisc[d] = { totalQ: 0, hits: 0, minutes: 0 };
+        if (item.type === 'question') {
+          byDisc[d].totalQ++;
+          if (Number(item.isCorrect) === 1) byDisc[d].hits++;
+        } else if (item.type === 'study') {
+          byDisc[d].minutes += Number(item.minutes || 0);
+        }
+      });
+
+      const discEntries = Object.entries(byDisc);
+      let bestDisc = '—';
+      let bestRate = -1;
+      discEntries.forEach(([d, st]) => {
+        if (st.totalQ > 0) {
+          const r = Math.round((st.hits / st.totalQ) * 100);
+          if (r > bestRate) { bestRate = r; bestDisc = d; }
+        }
+      });
+      document.getElementById('kpiBestDiscipline').textContent = bestDisc;
+      document.getElementById('kpiBestAcc').textContent = bestRate >= 0 ? `${bestRate}% de aproveitamento` : 'Resolva questões para calcular';
+
+      const discBox = document.getElementById('crmDisciplineList');
+      if (!discEntries.length) {
+        discBox.innerHTML = `<p class="text-xs text-slate-400">Nenhuma atividade registrada ainda. Resolva questões ou registre uma sessão de estudo ao lado!</p>`;
+      } else {
+        discBox.innerHTML = discEntries.map(([d, st]) => {
+          const rate = st.totalQ > 0 ? Math.round((st.hits / st.totalQ) * 100) : 0;
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between gap-2 text-xs">
+                <span class="font-bold text-white">${escapeHtml(d)}</span>
+                <span class="text-slate-400">
+                  ${st.totalQ} questões (${rate}% acerto) • ${st.minutes} min estudados
+                </span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div class="h-full bg-emerald-500 rounded-full" style="width: ${rate}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const recentBox = document.getElementById('crmRecentList');
+      if (!list.length) {
+        recentBox.innerHTML = `<p class="text-slate-400">Seu histórico de questões e sessões aparecerá aqui.</p>`;
+      } else {
+        recentBox.innerHTML = list.slice(0, 25).map(it => {
+          if (it.type === 'study') {
+            return `
+              <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-950 border border-slate-800/80">
+                <span>⏱️ Estudo em <strong class="text-indigo-300">${escapeHtml(it.discipline)}</strong> — ${it.minutes} min</span>
+                <span class="text-slate-500">${escapeHtml(it.date || '')}</span>
+              </div>
+            `;
+          }
+          const ok = Number(it.isCorrect) === 1;
+          return `
+            <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-950 border border-slate-800/80">
+              <span>${ok ? '✅' : '❌'} Questão de <strong class="text-slate-200">${escapeHtml(it.discipline)}</strong> (${ok ? 'Acerto' : 'Erro'})</span>
+              <span class="text-slate-500">${escapeHtml(it.date || '')}</span>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
     // ==================== ATIVAÇÃO DE ALUNO + ANTI-RATEIO ====================
@@ -889,10 +1260,13 @@ ERRADO</textarea>
             allowed: true,
             track: data.track || 'PASSAPORTE_ELITE',
             expiresAt: data.expiresAt || '',
-            email
+            email: data.email || email,
+            cpf: data.cpf || cpf
           };
           localStorage.setItem('ps_student_session', JSON.stringify(state.studentSession));
           updateStudentUI();
+          loadLocalCrmActivities();
+          await syncStudentCrmFromCloud();
           closeModal('studentModal');
           showToast(`Acesso liberado (${state.studentSession.track})!`);
           if (!document.getElementById('quizView').classList.contains('hidden')) {
